@@ -2,7 +2,7 @@
 
 Projeto: Compilador de C para JavaScript
 
-Ideia do Projeto
+**Ideia do Projeto**
 
 O projeto consiste no desenvolvimento de um compilador capaz de receber um código escrito em C e realizar sua tradução para JavaScript.
 
@@ -11,7 +11,7 @@ O compilador será responsável por analisar o código-fonte, depois da analise 
 Para o desenvolvimento do projeto, serão utilizadas as ferramentas Flex, Bison, WSL, git, GitHub e VS CODE.
 
 
-Planejamento de Execução
+**Planejamento de Execução**
 
 1. Configuração do ambiente
 
@@ -49,43 +49,43 @@ Planejamento de Execução
 - Realizar os testes finais.
 - Preparar o projeto para a entrega.
 
-Integrantes
+**Integrantes**
 
 
-**Nome**: Edilson Ribeiro da Cruz Júnior 
+**Nome:** Edilson Ribeiro da Cruz Júnior 
 
-**Matricula**: 222024461 
+**Matricula:** 222024461 
 
-**GitHub**(https://github.com/Edilson-r-jr)
-
-<br>
-
-**Nome**: Marcus Vinicius Rezende dos Santos
-
-**Matricula**: 232038335 
-
-**GitHub**(https://github.com/MarcusVRezende)
+**GitHub:** (https://github.com/Edilson-r-jr)
 
 <br>
 
-**Nome**: Maria Laura Regis Cabral Dias
+**Nome:** Marcus Vinicius Rezende dos Santos
 
-**Matricula**: 232005361
+**Matricula:** 232038335 
 
-**GitHub**: (https://github.com/Maria-Laura-Regis)
-
-<br>
-
-**Nome**: Miqueias Ezequiel Gonçalves Carvalho
-
-**Matricula**: 232005450
-
-**GitHub**: (https://github.com/Kael-web7)
+**GitHub:** (https://github.com/MarcusVRezende)
 
 <br>
 
-**Nome**: Pedro Henrique Conceição De Souza
+**Nome:** Maria Laura Regis Cabral Dias
 
-**Matricula**: 232030032
+**Matricula:** 232005361
 
-**GitHub**: (https://github.com/PedroHenriqueCo)
+**GitHub:** (https://github.com/Maria-Laura-Regis)
+
+<br>
+
+**Nome:** Miqueias Ezequiel Gonçalves Carvalho
+
+**Matricula:** 232005450
+
+**GitHub:** (https://github.com/Kael-web7)
+
+<br>
+
+**Nome:** Pedro Henrique Conceição De Souza
+
+**Matricula:** 232030032
+
+**GitHub:** (https://github.com/PedroHenriqueCo)
