@@ -52,21 +52,35 @@ Planejamento de Execução
 Integrantes
 
 Nome: Edilson Ribeiro da Cruz Júnior 
+
 Matricula: 222024461 
+
 GitHub(https://github.com/Edilson-r-jr)
 
+
 Nome: Marcus Vinicius Rezende dos Santos
+
 Matricula: 232038335 
+
 GitHub(https://github.com/MarcusVRezende)
 
+
 Nome: Maria Laura Regis Cabral Dias
+
 Matricula: 232005361
+
 GitHub: (https://github.com/Maria-Laura-Regis)
 
+
 Nome: Miqueias Ezequiel Gonçalves Carvalho
+
 Matricula: 232005450
+
 GitHub: (https://github.com/Kael-web7)
 
+
 Nome: Pedro Henrique Conceição De Souza
+
 Matricula: 232030032
+
 GitHub: (https://github.com/PedroHenriqueCo)
