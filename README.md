@@ -51,9 +51,8 @@ Planejamento de Execução
 
 Integrantes
 
-GitHub| Nome| Matrícula
-(https://github.com/Edilson-r-jr)| Edilson Ribeiro da Cruz Júnior| 222024461
-(https://github.com/MarcusVRezende)| Marcus Vinicius Rezende dos Santos| 232038335
-(https://github.com/Maria-Laura-Regis)| Maria Laura Regis Cabral Dias| 232005361
-(https://github.com/Kael-web7)| Miqueias Ezequiel Gonçalves Carvalho| 232005450
-(https://github.com/PedroHenriqueCo)| Pedro Henrique Conceição De Souza| 232030032
+Edilson Ribeiro da Cruz Júnior| 222024461 |(https://github.com/Edilson-r-jr)
+Marcus Vinicius Rezende dos Santos| 232038335 |(https://github.com/MarcusVRezende)
+Maria Laura Regis Cabral Dias| 232005361 |(https://github.com/Maria-Laura-Regis)
+Miqueias Ezequiel Gonçalves Carvalho| 232005450 |(https://github.com/Kael-web7)
+Pedro Henrique Conceição De Souza| 232030032 |(https://github.com/PedroHenriqueCo)
