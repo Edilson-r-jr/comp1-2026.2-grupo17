@@ -53,29 +53,39 @@ Integrantes
 
 
 **Nome**: Edilson Ribeiro da Cruz Júnior 
+
 **Matricula**: 222024461 
+
 **GitHub**(https://github.com/Edilson-r-jr)
 
 <br>
 
 **Nome**: Marcus Vinicius Rezende dos Santos
+
 **Matricula**: 232038335 
+
 **GitHub**(https://github.com/MarcusVRezende)
 
 <br>
 
 **Nome**: Maria Laura Regis Cabral Dias
+
 **Matricula**: 232005361
+
 **GitHub**: (https://github.com/Maria-Laura-Regis)
 
 <br>
 
 **Nome**: Miqueias Ezequiel Gonçalves Carvalho
+
 **Matricula**: 232005450
+
 **GitHub**: (https://github.com/Kael-web7)
 
 <br>
 
 **Nome**: Pedro Henrique Conceição De Souza
+
 **Matricula**: 232030032
+
 **GitHub**: (https://github.com/PedroHenriqueCo)
