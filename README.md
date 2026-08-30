@@ -8,7 +8,7 @@ O projeto consiste no desenvolvimento de um compilador capaz de receber um códi
 
 O compilador será responsável por analisar o código-fonte, depois da analise o compilador vai trabalhar na geração de um código equivalente em JavaScript.
 
-Para o desenvolvimento do projeto, serão utilizadas as ferramentas Flex e Bison.
+Para o desenvolvimento do projeto, serão utilizadas as ferramentas Flex, Bison, WSL, git, GitHub e VS CODE.
 
 
 Planejamento de Execução
@@ -28,7 +28,6 @@ Planejamento de Execução
 3. Análise Sintática
 
 - Definir a gramática da linguagem.
-- Implementar o parser utilizando Bison.
 - Integrar o analisador léxico ao analisador sintático.
 - Testar estruturas válidas e inválidas.
 
@@ -38,11 +37,9 @@ Planejamento de Execução
 - Implementar a geração do código JavaScript.
 - Testar a saída gerada com diferentes programas.
 
-5. Integração e Testes
+5. Integração 
 
 - Integrar todas as etapas do compilador.
-- Corrigir erros encontrados durante os testes.
-- Realizar testes com diferentes casos de entrada.
 - Documentar o funcionamento do projeto.
 
 6. Finalização
