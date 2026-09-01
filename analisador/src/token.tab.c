@@ -116,10 +116,30 @@ enum yysymbol_kind_t
   YYSYMBOL_LPAREN = 8,                     /* LPAREN  */
   YYSYMBOL_RPAREN = 9,                     /* RPAREN  */
   YYSYMBOL_NEWLINE = 10,                   /* NEWLINE  */
-  YYSYMBOL_YYACCEPT = 11,                  /* $accept  */
-  YYSYMBOL_input = 12,                     /* input  */
-  YYSYMBOL_line = 13,                      /* line  */
-  YYSYMBOL_exp = 14                        /* exp  */
+  YYSYMBOL_ID = 11,                        /* ID  */
+  YYSYMBOL_IF = 12,                        /* IF  */
+  YYSYMBOL_ELSE = 13,                      /* ELSE  */
+  YYSYMBOL_WHILE = 14,                     /* WHILE  */
+  YYSYMBOL_RETURN = 15,                    /* RETURN  */
+  YYSYMBOL_INT = 16,                       /* INT  */
+  YYSYMBOL_FLOAT = 17,                     /* FLOAT  */
+  YYSYMBOL_CHAR = 18,                      /* CHAR  */
+  YYSYMBOL_VOID = 19,                      /* VOID  */
+  YYSYMBOL_ASSIGN = 20,                    /* ASSIGN  */
+  YYSYMBOL_EQ = 21,                        /* EQ  */
+  YYSYMBOL_NEQ = 22,                       /* NEQ  */
+  YYSYMBOL_LT = 23,                        /* LT  */
+  YYSYMBOL_LE = 24,                        /* LE  */
+  YYSYMBOL_GT = 25,                        /* GT  */
+  YYSYMBOL_GE = 26,                        /* GE  */
+  YYSYMBOL_LBRACE = 27,                    /* LBRACE  */
+  YYSYMBOL_RBRACE = 28,                    /* RBRACE  */
+  YYSYMBOL_COMMA = 29,                     /* COMMA  */
+  YYSYMBOL_SEMICOLON = 30,                 /* SEMICOLON  */
+  YYSYMBOL_YYACCEPT = 31,                  /* $accept  */
+  YYSYMBOL_input = 32,                     /* input  */
+  YYSYMBOL_line = 33,                      /* line  */
+  YYSYMBOL_exp = 34                        /* exp  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -450,7 +470,7 @@ union yyalloc
 #define YYLAST   28
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  11
+#define YYNTOKENS  31
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  4
 /* YYNRULES -- Number of rules.  */
@@ -459,7 +479,7 @@ union yyalloc
 #define YYNSTATES  21
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   265
+#define YYMAXUTOK   285
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -499,15 +519,17 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
+      25,    26,    27,    28,    29,    30
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    31,    31,    33,    37,    38,    41,    48,    51,    54,
-      57,    60,    68
+       0,    36,    36,    38,    42,    43,    46,    53,    56,    59,
+      62,    65,    73
 };
 #endif
 
@@ -524,8 +546,10 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
 static const char *const yytname[] =
 {
   "\"end of file\"", "error", "\"invalid token\"", "NUM", "PLUS", "MINUS",
-  "TIMES", "DIV", "LPAREN", "RPAREN", "NEWLINE", "$accept", "input",
-  "line", "exp", YY_NULLPTR
+  "TIMES", "DIV", "LPAREN", "RPAREN", "NEWLINE", "ID", "IF", "ELSE",
+  "WHILE", "RETURN", "INT", "FLOAT", "CHAR", "VOID", "ASSIGN", "EQ", "NEQ",
+  "LT", "LE", "GT", "GE", "LBRACE", "RBRACE", "COMMA", "SEMICOLON",
+  "$accept", "input", "line", "exp", YY_NULLPTR
 };
 
 static const char *
@@ -597,16 +621,16 @@ static const yytype_int8 yycheck[] =
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    12,     0,     1,     3,     8,    10,    13,    14,    10,
-      14,     4,     5,     6,     7,    10,     9,    14,    14,    14,
-      14
+       0,    32,     0,     1,     3,     8,    10,    33,    34,    10,
+      34,     4,     5,     6,     7,    10,     9,    34,    34,    34,
+      34
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    11,    12,    12,    13,    13,    13,    14,    14,    14,
-      14,    14,    14
+       0,    31,    32,    32,    33,    33,    33,    34,    34,    34,
+      34,    34,    34
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -1077,56 +1101,56 @@ yyreduce:
   switch (yyn)
     {
   case 5: /* line: exp NEWLINE  */
-#line 38 "token.y"
+#line 43 "token.y"
                   { 
         printf("Resultado: %d\n", (yyvsp[-1].intValue)); 
     }
-#line 1085 "token.tab.c"
+#line 1109 "token.tab.c"
     break;
 
   case 6: /* line: error NEWLINE  */
-#line 41 "token.y"
+#line 46 "token.y"
                     { 
         /* Recuperação simples de erros sintáticos por linha */
         yyerrok; 
     }
-#line 1094 "token.tab.c"
-    break;
-
-  case 7: /* exp: NUM  */
-#line 48 "token.y"
-        { 
-        (yyval.intValue) = (yyvsp[0].intValue); 
-    }
-#line 1102 "token.tab.c"
-    break;
-
-  case 8: /* exp: exp PLUS exp  */
-#line 51 "token.y"
-                   { 
-        (yyval.intValue) = (yyvsp[-2].intValue) + (yyvsp[0].intValue); 
-    }
-#line 1110 "token.tab.c"
-    break;
-
-  case 9: /* exp: exp MINUS exp  */
-#line 54 "token.y"
-                    { 
-        (yyval.intValue) = (yyvsp[-2].intValue) - (yyvsp[0].intValue); 
-    }
 #line 1118 "token.tab.c"
     break;
 
-  case 10: /* exp: exp TIMES exp  */
-#line 57 "token.y"
-                    { 
-        (yyval.intValue) = (yyvsp[-2].intValue) * (yyvsp[0].intValue); 
+  case 7: /* exp: NUM  */
+#line 53 "token.y"
+        { 
+        (yyval.intValue) = (yyvsp[0].intValue); 
     }
 #line 1126 "token.tab.c"
     break;
 
+  case 8: /* exp: exp PLUS exp  */
+#line 56 "token.y"
+                   { 
+        (yyval.intValue) = (yyvsp[-2].intValue) + (yyvsp[0].intValue); 
+    }
+#line 1134 "token.tab.c"
+    break;
+
+  case 9: /* exp: exp MINUS exp  */
+#line 59 "token.y"
+                    { 
+        (yyval.intValue) = (yyvsp[-2].intValue) - (yyvsp[0].intValue); 
+    }
+#line 1142 "token.tab.c"
+    break;
+
+  case 10: /* exp: exp TIMES exp  */
+#line 62 "token.y"
+                    { 
+        (yyval.intValue) = (yyvsp[-2].intValue) * (yyvsp[0].intValue); 
+    }
+#line 1150 "token.tab.c"
+    break;
+
   case 11: /* exp: exp DIV exp  */
-#line 60 "token.y"
+#line 65 "token.y"
                   { 
         if ((yyvsp[0].intValue) == 0) {
             yyerror("Erro de divisão por zero!");
@@ -1135,19 +1159,19 @@ yyreduce:
             (yyval.intValue) = (yyvsp[-2].intValue) / (yyvsp[0].intValue); 
         }
     }
-#line 1139 "token.tab.c"
+#line 1163 "token.tab.c"
     break;
 
   case 12: /* exp: LPAREN exp RPAREN  */
-#line 68 "token.y"
+#line 73 "token.y"
                         { 
         (yyval.intValue) = (yyvsp[-1].intValue); 
     }
-#line 1147 "token.tab.c"
+#line 1171 "token.tab.c"
     break;
 
 
-#line 1151 "token.tab.c"
+#line 1175 "token.tab.c"
 
       default: break;
     }
@@ -1340,7 +1364,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 73 "token.y"
+#line 78 "token.y"
 
 
 /* Função obrigatória do Bison para relatar erros de sintaxe */
