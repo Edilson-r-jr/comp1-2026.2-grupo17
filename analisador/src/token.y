@@ -17,6 +17,11 @@ extern FILE *yyin;
 %token <intValue> NUM
 %token PLUS MINUS TIMES DIV LPAREN RPAREN NEWLINE
 
+/* Novos Tokens para atender a issue */
+%token ID
+%token IF ELSE WHILE RETURN INT FLOAT CHAR VOID
+%token ASSIGN EQ NEQ LT LE GT GE
+%token LBRACE RBRACE COMMA SEMICOLON
 
 %type <intValue> exp
 
