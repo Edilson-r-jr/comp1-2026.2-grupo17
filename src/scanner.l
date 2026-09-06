@@ -13,7 +13,7 @@
 
 %%
 
-[ \t]+                  { /* ignora apenas espaços e tabs */ }
+[ \t\r\n]+                  { /* ignora apenas espaços e tabs */ }
 "//".*                  { /* ignora comentarios de linha */ }
 "/*"([^*]|\*+[^*/])*\*+"/" { /* ignora comentarios de bloco */ }
 
