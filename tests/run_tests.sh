@@ -5,7 +5,7 @@ VERMELHO='\033[0;31m'
 AMARELO='\033[1;33m'
 RESET='\033[0m'
 
-EXECUTAVEL="./hello"
+EXECUTAVEL="analisador/src/parser"
 DIR_TESTES="."
 
 echo -e "${AMARELO}==> Rodando bateria de testes...${RESET}\n"
