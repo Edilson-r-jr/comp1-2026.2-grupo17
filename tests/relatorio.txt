@@ -1,0 +1,23 @@
+Relatório de testes - 2026-09-06 18:05:58
+========================================
+
+----------------------------------------
+TESTE DE ERRO FALHOU: teste02
+Código de saída: 1
+
+--- Entrada ---
+7/0
+--- Erro esperado (stderr) ---
+Erro de Sintaxe: Erro de divisão por zero!
+
+--- Erro obtido (stderr) ---
+Erro de Sintaxe: Erro de divisão por zero!
+Erro de Sintaxe: syntax error
+
+--- Diferenças ---
+1a2
+> Erro de Sintaxe: syntax error
+
+--- stdout capturado (deveria estar vazio) ---
+(vazio)
+
