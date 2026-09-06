@@ -58,16 +58,46 @@ extern int yydebug;
     PLUS = 259,                    /* PLUS  */
     MINUS = 260,                   /* MINUS  */
     TIMES = 261,                   /* TIMES  */
-    DIVIDE = 262,                  /* DIVIDE  */
+    DIV = 262,                     /* DIV  */
     LPAREN = 263,                  /* LPAREN  */
-    RPAREN = 264                   /* RPAREN  */
+    RPAREN = 264,                  /* RPAREN  */
+    NEWLINE = 265,                 /* NEWLINE  */
+    ID = 266,                      /* ID  */
+    IF = 267,                      /* IF  */
+    ELSE = 268,                    /* ELSE  */
+    WHILE = 269,                   /* WHILE  */
+    RETURN = 270,                  /* RETURN  */
+    INT = 271,                     /* INT  */
+    FLOAT = 272,                   /* FLOAT  */
+    CHAR = 273,                    /* CHAR  */
+    VOID = 274,                    /* VOID  */
+    ASSIGN = 275,                  /* ASSIGN  */
+    EQ = 276,                      /* EQ  */
+    NEQ = 277,                     /* NEQ  */
+    LT = 278,                      /* LT  */
+    LE = 279,                      /* LE  */
+    GT = 280,                      /* GT  */
+    GE = 281,                      /* GE  */
+    LBRACE = 282,                  /* LBRACE  */
+    RBRACE = 283,                  /* RBRACE  */
+    COMMA = 284,                   /* COMMA  */
+    SEMICOLON = 285                /* SEMICOLON  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+union YYSTYPE
+{
+#line 13 "parser.y"
+
+    int intValue;
+
+#line 98 "parser.tab.h"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif

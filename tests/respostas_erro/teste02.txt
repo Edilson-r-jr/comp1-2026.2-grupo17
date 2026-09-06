@@ -1,0 +1,1 @@
+Erro de Sintaxe: Erro de divisão por zero!

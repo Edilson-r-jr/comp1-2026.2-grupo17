@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /* Protótipos das funções necessárias para o Bison */
 int yylex(void);
@@ -41,7 +42,7 @@ input:
 line:
     NEWLINE
     | exp NEWLINE { 
-        printf("Resultado: %d\n", $1); 
+        printf("%d\n", $1); 
     }
     | error NEWLINE { 
         /* Recuperação simples de erros sintáticos por linha */
@@ -84,16 +85,21 @@ void yyerror(const char *s) {
 
 /* Função principal (Main) colocada aqui na raiz do Parser */
 int main(int argc, char **argv) {
+    FILE *f = NULL;                    // guarda referência para fechar depois
     if (argc > 1) {
-        FILE *f = fopen(argv[1], "r");
+        f = fopen(argv[1], "r");
         if (!f) {
             perror("Erro ao abrir o arquivo fornecido");
             return 1;
         }
         yyin = f;
     } else {
+        if (isatty(STDIN_FILENO)) {
         printf("Modo interativo. Digite contas (ex: 2 + 3 * 4) e aperte Enter:\n");
     }
-    
-    return yyparse();
+    }
+    int resultado = yyparse();        // captura o retorno antes de fechar
+
+    if (f) fclose(f);                 // só fecha se um arquivo foi aberto
+    return resultado;
 }
