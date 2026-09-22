@@ -44,6 +44,17 @@
 #if YYDEBUG
 extern int yydebug;
 #endif
+/* "%code requires" blocks.  */
+#line 18 "parser.y"
+
+    typedef struct {
+        int tipo;       /* um dos TIPO_* de tabela.h */
+        long i;         /* valor se o tipo for char/int/long */
+        double r;       /* valor se o tipo for float/double */
+        int ok;         /* 0 se a expressão contém erro semântico */
+    } Valor;
+
+#line 58 "parser.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -55,33 +66,38 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     NUM = 258,                     /* NUM  */
-    PLUS = 259,                    /* PLUS  */
-    MINUS = 260,                   /* MINUS  */
-    TIMES = 261,                   /* TIMES  */
-    DIV = 262,                     /* DIV  */
-    LPAREN = 263,                  /* LPAREN  */
-    RPAREN = 264,                  /* RPAREN  */
-    NEWLINE = 265,                 /* NEWLINE  */
-    ID = 266,                      /* ID  */
-    IF = 267,                      /* IF  */
-    ELSE = 268,                    /* ELSE  */
-    WHILE = 269,                   /* WHILE  */
-    RETURN = 270,                  /* RETURN  */
-    INT = 271,                     /* INT  */
-    FLOAT = 272,                   /* FLOAT  */
-    CHAR = 273,                    /* CHAR  */
-    VOID = 274,                    /* VOID  */
-    ASSIGN = 275,                  /* ASSIGN  */
-    EQ = 276,                      /* EQ  */
-    NEQ = 277,                     /* NEQ  */
-    LT = 278,                      /* LT  */
-    LE = 279,                      /* LE  */
-    GT = 280,                      /* GT  */
-    GE = 281,                      /* GE  */
-    LBRACE = 282,                  /* LBRACE  */
-    RBRACE = 283,                  /* RBRACE  */
-    COMMA = 284,                   /* COMMA  */
-    SEMICOLON = 285                /* SEMICOLON  */
+    NUM_LONG = 259,                /* NUM_LONG  */
+    CARACTERE = 260,               /* CARACTERE  */
+    NUM_REAL = 261,                /* NUM_REAL  */
+    ID = 262,                      /* ID  */
+    IF = 263,                      /* IF  */
+    ELSE = 264,                    /* ELSE  */
+    WHILE = 265,                   /* WHILE  */
+    RETURN = 266,                  /* RETURN  */
+    VOID = 267,                    /* VOID  */
+    CHAR = 268,                    /* CHAR  */
+    INT = 269,                     /* INT  */
+    LONG = 270,                    /* LONG  */
+    FLOAT = 271,                   /* FLOAT  */
+    DOUBLE = 272,                  /* DOUBLE  */
+    PLUS = 273,                    /* PLUS  */
+    MINUS = 274,                   /* MINUS  */
+    TIMES = 275,                   /* TIMES  */
+    DIV = 276,                     /* DIV  */
+    LPAREN = 277,                  /* LPAREN  */
+    RPAREN = 278,                  /* RPAREN  */
+    ASSIGN = 279,                  /* ASSIGN  */
+    EQ = 280,                      /* EQ  */
+    NEQ = 281,                     /* NEQ  */
+    LT = 282,                      /* LT  */
+    LE = 283,                      /* LE  */
+    GT = 284,                      /* GT  */
+    GE = 285,                      /* GE  */
+    LBRACE = 286,                  /* LBRACE  */
+    RBRACE = 287,                  /* RBRACE  */
+    COMMA = 288,                   /* COMMA  */
+    SEMICOLON = 289,               /* SEMICOLON  */
+    UMINUS = 290                   /* UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -90,11 +106,14 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 13 "parser.y"
+#line 41 "parser.y"
 
-    int intValue;
+    long intValue;
+    double realValue;
+    char *strValue;
+    Valor valor;
 
-#line 98 "parser.tab.h"
+#line 117 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
