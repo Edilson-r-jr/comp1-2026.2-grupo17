@@ -3,19 +3,32 @@
 /* Universidade de Brasília (UnB) */
 
 %{
-#include "token.tab.h"  /* Cabeçalho gerado pelo Bison */
+#include "parser.tab.h"  /* Cabeçalho gerado pelo Bison */
 #include <stdlib.h>       /* Necessário para o atoi() */
 #include <stdio.h>
+int yycolumn = 1;
+
+#define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    yylloc.last_column = yycolumn + yyleng - 1; \
+    yycolumn += yyleng;
 %}
 
 /* Opção para evitar ter que linkar com -lfl e dispensar a função yywrap */
 %option noyywrap
 
+%option yylineno
+
 %%
 
-[ \t\r\n]+                  { /* ignora apenas espaços e tabs */ }
+[ \t\r]+                  { /* ignora apenas espaços e tabs */ }
 "//".*                  { /* ignora comentarios de linha */ }
-"/*"([^*]|\*+[^*/])*\*+"/" { /* ignora comentarios de bloco */ }
+"/*"([^*]|\*+[^*/])*\*+"/" {
+    for (int i = 0; i < yyleng; i++) {
+        if (yytext[i] == '\n') { yylineno++; yycolumn = 1; }
+    }
+}
 
 "if"                    { return IF; }
 "else"                  { return ELSE; }
@@ -51,7 +64,10 @@
 "}"     { return RBRACE; }
 ","     { return COMMA; }
 ";"     { return SEMICOLON; }
-"\n"    { return NEWLINE; } /* Adicionado o ponto e vírgula */
-.       { printf("caractere invalido: %s\n", yytext); } /* Corrigido de $s para %s e adicionado ; */
+"\n"    { yylineno++; yycolumn = 1; }
+.       {
+            fprintf(stderr, "Erro Léxico [Linha %d, Col %d]: Caractere inesperado '%s'\n",
+                    yylloc.first_line, yylloc.first_column, yytext);
+        }
 
 %%

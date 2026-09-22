@@ -18,6 +18,9 @@ extern FILE *yyin;
 %token <intValue> NUM
 %token PLUS MINUS TIMES DIV LPAREN RPAREN NEWLINE
 
+%locations
+
+
 /* Novos Tokens para atender a issue */
 %token ID
 %token IF ELSE WHILE RETURN INT FLOAT CHAR VOID
@@ -30,6 +33,8 @@ extern FILE *yyin;
 %left PLUS MINUS
 %left TIMES DIV
 
+
+
 %%
 
 /* Regras da Gramática (Context-Free Grammar) */
@@ -41,47 +46,48 @@ input:
 
 line:
     NEWLINE
-    | exp NEWLINE { 
-        printf("%d\n", $1); 
+    | exp NEWLINE {
+        printf("%d\n", $1);
     }
-    | error NEWLINE { 
+    | error NEWLINE {
         /* Recuperação simples de erros sintáticos por linha */
-        yyerrok; 
+        yyerrok;
     }
     ;
 
 exp:
-    NUM { 
-        $$ = $1; 
+    NUM {
+        $$ = $1;
     }
-    | exp PLUS exp { 
-        $$ = $1 + $3; 
+    | exp PLUS exp {
+        $$ = $1 + $3;
     }
-    | exp MINUS exp { 
-        $$ = $1 - $3; 
+    | exp MINUS exp {
+        $$ = $1 - $3;
     }
-    | exp TIMES exp { 
-        $$ = $1 * $3; 
+    | exp TIMES exp {
+        $$ = $1 * $3;
     }
-    | exp DIV exp { 
+    | exp DIV exp {
         if ($3 == 0) {
-            yyerror("Erro de divisão por zero!");
+            fprintf(stderr, "Erro Semântico [Linha %d]: Divisão por zero\n", @3.first_line);
             $$ = 0;
         } else {
-            $$ = $1 / $3; 
+            $$ = $1 / $3;
         }
     }
-    | LPAREN exp RPAREN { 
-        $$ = $2; 
+    | LPAREN exp RPAREN {
+        $$ = $2;
     }
     ;
 
 %%
 
-/* Função obrigatória do Bison para relatar erros de sintaxe */
 void yyerror(const char *s) {
-    fprintf(stderr, "Erro de Sintaxe: %s\n", s);
+    fprintf(stderr, "Erro Sintático [Linha %d]: %s\n", yylloc.first_line, s);
 }
+
+
 
 /* Função principal (Main) colocada aqui na raiz do Parser */
 int main(int argc, char **argv) {
