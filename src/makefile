@@ -22,7 +22,7 @@ $(FLEX_C): $(FLEX_FILE) $(BISON_H)
 	flex $(FLEX_FILE)
 
 test: $(EXEC)
-	./run_tests.sh
+	tests/run_tests.sh
 
 clean:
 	rm -f $(EXEC) $(BISON_C) $(BISON_H) $(FLEX_C)
