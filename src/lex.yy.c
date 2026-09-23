@@ -519,16 +519,19 @@ char *yytext;
 #include "parser.tab.h"  /* Cabeçalho gerado pelo Bison */
 #include <stdlib.h>       /* Necessário para o atoi() */
 #include <stdio.h>
+
 int yycolumn = 1;
 
-#define YY_USER_ACTION \
-    yylloc.first_line = yylloc.last_line = yylineno; \
-    yylloc.first_column = yycolumn; \
-    yylloc.last_column = yycolumn + yyleng - 1; \
-    yycolumn += yyleng;
-#line 530 "lex.yy.c"
+/* Atualiza yylloc a partir do lexema atual (definida no fim do arquivo) */
+static void atualiza_local(void);
+
+/* Executada automaticamente antes da ação de TODA regra */
+#define YY_USER_ACTION atualiza_local();
+#line 531 "lex.yy.c"
 /* Opção para evitar ter que linkar com -lfl e dispensar a função yywrap */
-#line 532 "lex.yy.c"
+/* O Flex incrementa yylineno sozinho a cada '\n' casado.
+   NUNCA faça yylineno++ manualmente nas regras. */
+#line 535 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -745,10 +748,10 @@ YY_DECL
 		}
 
 	{
-#line 23 "scanner.l"
+#line 26 "scanner.l"
 
 
-#line 752 "lex.yy.c"
+#line 755 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -817,23 +820,20 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 25 "scanner.l"
-{ /* ignora apenas espaços e tabs */ }
+#line 28 "scanner.l"
+{ /* ignora espaços, tabs e CR residual do Windows */ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 26 "scanner.l"
-{ /* ignora comentarios de linha */ }
+#line 29 "scanner.l"
+{ /* ignora comentários de linha */ }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 27 "scanner.l"
-{
-    for (int i = 0; i < yyleng; i++) {
-        if (yytext[i] == '\n') { yylineno++; yycolumn = 1; }
-    }
-}
+#line 30 "scanner.l"
+{ /* ignora comentários multilinha;
+                                linha e coluna já tratadas em atualiza_local() */ }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
@@ -976,12 +976,12 @@ YY_RULE_SETUP
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 67 "scanner.l"
-{ yylineno++; yycolumn = 1; }
+#line 68 "scanner.l"
+{ return NEWLINE; }   /* coluna já volta para 1 em atualiza_local() */
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 68 "scanner.l"
+#line 70 "scanner.l"
 {
             fprintf(stderr, "Erro Léxico [Linha %d, Col %d]: Caractere inesperado '%s'\n",
                     yylloc.first_line, yylloc.first_column, yytext);
@@ -989,7 +989,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 73 "scanner.l"
+#line 75 "scanner.l"
 ECHO;
 	YY_BREAK
 #line 996 "lex.yy.c"
@@ -2009,6 +2009,38 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 73 "scanner.l"
+#line 75 "scanner.l"
 
+
+/*
+ * Chamada antes de cada ação (via YY_USER_ACTION).
+ *
+ * Com %option yylineno, o Flex já somou em yylineno todas as quebras de
+ * linha do lexema ANTES de chegar aqui. Por isso:
+ *   - linha inicial = yylineno - (quebras dentro do lexema)
+ *   - se o lexema contém '\n', a próxima coluna é contada a partir
+ *     da última quebra (vale para "\n" e para comentários multilinha).
+ */
+static void atualiza_local(void) {
+    int quebras = 0;
+    int pos_ultima_quebra = -1;
+
+    for (int i = 0; i < yyleng; i++) {
+        if (yytext[i] == '\n') {
+            quebras++;
+            pos_ultima_quebra = i;
+        }
+    }
+
+    yylloc.first_line   = yylineno - quebras;
+    yylloc.last_line    = yylineno;
+    yylloc.first_column = yycolumn;
+
+    if (pos_ultima_quebra >= 0)
+        yycolumn = yyleng - pos_ultima_quebra;  /* 1 + caracteres após o último '\n' */
+    else
+        yycolumn += yyleng;
+
+    yylloc.last_column = yycolumn - 1;
+}
 
