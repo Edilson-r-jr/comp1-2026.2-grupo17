@@ -17,7 +17,8 @@
  * A ordem importa: quanto maior o valor, mais "largo" é o tipo.
  * Isso é usado na promoção de tipos em expressões mistas
  * (ex.: long + double -> double), como no C. */
-typedef enum {
+typedef enum
+{
     TIPO_CHAR = 0,
     TIPO_INT,
     TIPO_LONG,
@@ -29,12 +30,13 @@ typedef enum {
 #define TIPO_INEXISTENTE (-1)
 
 /* Uma entrada da tabela. */
-typedef struct Simbolo {
-    char *nome;             /* nome da variável (cópia própria) */
-    int tipo;               /* um dos valores de Tipo */
-    long valor_int;         /* valor quando o tipo é inteiro (char/int/long) */
-    double valor_real;      /* valor quando o tipo é real (float/double) */
-    struct Simbolo *prox;   /* próximo da lista */
+typedef struct Simbolo
+{
+    char *nome;           /* nome da variável (cópia própria) */
+    int tipo;             /* um dos valores de Tipo */
+    long valor_int;       /* valor quando o tipo é inteiro (char/int/long) */
+    double valor_real;    /* valor quando o tipo é real (float/double) */
+    struct Simbolo *prox; /* próximo da lista */
 } Simbolo;
 
 /* Cabeça da lista encadeada (global, vive durante toda a execução). */
@@ -44,35 +46,58 @@ static Simbolo *tabela_simbolos = NULL;
  * o programa termina com código de saída diferente de zero. */
 static int erros_semanticos = 0;
 
-/* Linha atual, mantida pelo Flex (%option yylineno). */
-extern int yylineno;
+/* Posição (linha/coluna) usada nas mensagens de erro semântico.
+ * O parser atualiza com definir_posicao(@N) antes de chamar a tabela. */
+static int pos_linha = 0;
+static int pos_coluna = 0;
 
-static inline const char *nome_tipo(int tipo) {
-    switch (tipo) {
-        case TIPO_CHAR:   return "char";
-        case TIPO_INT:    return "int";
-        case TIPO_LONG:   return "long";
-        case TIPO_FLOAT:  return "float";
-        case TIPO_DOUBLE: return "double";
-        default:          return "desconhecido";
+static inline void definir_posicao(int linha, int coluna)
+{
+    pos_linha = linha;
+    pos_coluna = coluna;
+}
+
+static inline const char *nome_tipo(int tipo)
+{
+    switch (tipo)
+    {
+    case TIPO_CHAR:
+        return "char";
+    case TIPO_INT:
+        return "int";
+    case TIPO_LONG:
+        return "long";
+    case TIPO_FLOAT:
+        return "float";
+    case TIPO_DOUBLE:
+        return "double";
+    default:
+        return "desconhecido";
     }
 }
 
-static inline int tipo_eh_real(int tipo) {
+static inline int tipo_eh_real(int tipo)
+{
     return tipo == TIPO_FLOAT || tipo == TIPO_DOUBLE;
 }
 
-static inline void erro_semantico(const char *fmt, const char *nome) {
-    fprintf(stderr, "Erro Semantico (linha %d): ", yylineno);
+/* Mensagem no mesmo formato dos erros léxicos e sintáticos:
+ *   Erro Semântico [Linha X, Col Y]: <mensagem> */
+static inline void erro_semantico(const char *fmt, const char *nome)
+{
+    fprintf(stderr, "Erro Semântico [Linha %d, Col %d]: ", pos_linha, pos_coluna);
     fprintf(stderr, fmt, nome);
     fputc('\n', stderr);
     erros_semanticos++;
 }
 
 /* Procura uma variável pelo nome. Retorna NULL se não existir. */
-static inline Simbolo *buscar_variavel(const char *nome) {
-    for (Simbolo *s = tabela_simbolos; s != NULL; s = s->prox) {
-        if (strcmp(s->nome, nome) == 0) {
+static inline Simbolo *buscar_variavel(const char *nome)
+{
+    for (Simbolo *s = tabela_simbolos; s != NULL; s = s->prox)
+    {
+        if (strcmp(s->nome, nome) == 0)
+        {
             return s;
         }
     }
@@ -80,19 +105,23 @@ static inline Simbolo *buscar_variavel(const char *nome) {
 }
 
 /* Registra uma nova variável. Redeclaração é erro semântico. */
-static inline void inserir_variavel(char *nome, int tipo) {
-    if (buscar_variavel(nome) != NULL) {
-        erro_semantico("variavel '%s' ja foi declarada", nome);
+static inline void inserir_variavel(char *nome, int tipo)
+{
+    if (buscar_variavel(nome) != NULL)
+    {
+        erro_semantico("Variável '%s' já foi declarada", nome);
         return;
     }
 
     Simbolo *novo = malloc(sizeof(Simbolo));
-    if (novo == NULL) {
+    if (novo == NULL)
+    {
         perror("malloc");
         exit(1);
     }
     novo->nome = malloc(strlen(nome) + 1);
-    if (novo->nome == NULL) {
+    if (novo->nome == NULL)
+    {
         perror("malloc");
         exit(1);
     }
@@ -108,15 +137,18 @@ static inline void inserir_variavel(char *nome, int tipo) {
 
 /* Retorna o tipo de uma variável já declarada,
  * ou TIPO_INEXISTENTE se ela não estiver na tabela. */
-static inline int verificar_tipo(char *nome) {
+static inline int verificar_tipo(char *nome)
+{
     Simbolo *s = buscar_variavel(nome);
     return s ? s->tipo : TIPO_INEXISTENTE;
 }
 
 /* Libera toda a tabela (chamada ao final do main). */
-static inline void liberar_tabela(void) {
+static inline void liberar_tabela(void)
+{
     Simbolo *s = tabela_simbolos;
-    while (s != NULL) {
+    while (s != NULL)
+    {
         Simbolo *prox = s->prox;
         free(s->nome);
         free(s);
