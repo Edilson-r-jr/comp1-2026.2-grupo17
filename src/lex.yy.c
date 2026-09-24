@@ -402,6 +402,7 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    1,    2,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+<<<<<<< HEAD
         1,    2,    4,    1,    1,    1,    1,    1,    5,    6,
         7,    8,    9,   10,   11,   12,   13,   14,   14,   14,
        14,   14,   14,   14,   14,   14,   14,    1,   15,   16,
@@ -409,6 +410,15 @@ static const YY_CHAR yy_ec[256] =
        19,   19,   19,   19,   19,   21,   19,   19,   19,   19,
        19,   19,   19,   19,   19,   19,   19,   19,   19,   19,
         1,   22,    1,    1,   19,    1,   23,   24,   25,   26,
+=======
+        1,    2,    4,    1,    1,    1,    1,    1,    1,    5,
+        6,    7,    8,    9,   10,    1,   11,   12,   12,   12,
+       12,   12,   12,   12,   12,   12,   12,    1,   13,   14,
+       15,   16,    1,    1,   17,   17,   17,   17,   17,   17,
+       17,   17,   17,   17,   17,   17,   17,   17,   17,   17,
+       17,   17,   17,   17,   17,   17,   17,   17,   17,   17,
+        1,    1,    1,    1,   17,    1,   18,   17,   19,   20,
+>>>>>>> main
 
        27,   28,   29,   30,   31,   19,   19,   32,   19,   33,
        34,   19,   19,   35,   36,   37,   38,   39,   40,   19,
@@ -517,11 +527,18 @@ static const flex_int16_t yy_chk[186] =
     } ;
 
 /* Table of booleans, true if rule could match eol. */
+<<<<<<< HEAD
 static const flex_int32_t yy_rule_can_match_eol[40] =
     {   0,
 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
         };
+=======
+static const flex_int32_t yy_rule_can_match_eol[34] =
+    {   0,
+0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,     };
+>>>>>>> main
 
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
@@ -542,6 +559,7 @@ char *yytext;
 /* Curso de Engenharia de Software */
 /* Universidade de Brasília (UnB) */
 #line 6 "scanner.l"
+<<<<<<< HEAD
 #include "parser.tab.h"   /* Cabeçalho gerado pelo Bison (bison -d parser.y) */
 #include <stdlib.h>       /* strtol, strtod */
 #include <stdio.h>
@@ -571,6 +589,24 @@ static char valor_char(const char *texto) {
  * nounput/noinput: evitam warnings de funções geradas e não usadas. */
 #define YY_NO_INPUT 1
 #line 574 "lex.yy.c"
+=======
+#include "parser.tab.h"  /* Cabeçalho gerado pelo Bison */
+#include <stdlib.h>       /* Necessário para o atoi() */
+#include <stdio.h>
+
+int yycolumn = 1;
+
+/* Atualiza yylloc a partir do lexema atual (definida no fim do arquivo) */
+static void atualiza_local(void);
+
+/* Executada automaticamente antes da ação de TODA regra */
+#define YY_USER_ACTION atualiza_local();
+#line 531 "lex.yy.c"
+/* Opção para evitar ter que linkar com -lfl e dispensar a função yywrap */
+/* O Flex incrementa yylineno sozinho a cada '\n' casado.
+   NUNCA faça yylineno++ manualmente nas regras. */
+#line 535 "lex.yy.c"
+>>>>>>> main
 
 #define INITIAL 0
 
@@ -785,10 +821,17 @@ YY_DECL
 		}
 
 	{
+<<<<<<< HEAD
 #line 40 "scanner.l"
 
 
 #line 792 "lex.yy.c"
+=======
+#line 26 "scanner.l"
+
+
+#line 755 "lex.yy.c"
+>>>>>>> main
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -858,6 +901,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 42 "scanner.l"
 { /* ignora espaços, tabs e quebras de linha */ }
 	YY_BREAK
@@ -865,41 +909,77 @@ case 2:
 YY_RULE_SETUP
 #line 43 "scanner.l"
 { /* ignora comentarios de linha */ }
+=======
+#line 28 "scanner.l"
+{ /* ignora espaços, tabs e CR residual do Windows */ }
+	YY_BREAK
+case 2:
+YY_RULE_SETUP
+#line 29 "scanner.l"
+{ /* ignora comentários de linha */ }
+>>>>>>> main
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 44 "scanner.l"
 { /* ignora comentarios de bloco */ }
+=======
+#line 30 "scanner.l"
+{ /* ignora comentários multilinha;
+                                linha e coluna já tratadas em atualiza_local() */ }
+>>>>>>> main
 	YY_BREAK
 /* Palavras-reservadas (precisam vir ANTES da regra de ID) */
 case 4:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 47 "scanner.l"
+=======
+#line 33 "scanner.l"
+>>>>>>> main
 { return IF; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 48 "scanner.l"
+=======
+#line 34 "scanner.l"
+>>>>>>> main
 { return ELSE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 49 "scanner.l"
+=======
+#line 35 "scanner.l"
+>>>>>>> main
 { return WHILE; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 50 "scanner.l"
+=======
+#line 36 "scanner.l"
+>>>>>>> main
 { return RETURN; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 51 "scanner.l"
+=======
+#line 37 "scanner.l"
+>>>>>>> main
 { return INT; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 52 "scanner.l"
 { return CHAR; }
 	YY_BREAK
@@ -922,9 +1002,37 @@ case 13:
 YY_RULE_SETUP
 #line 56 "scanner.l"
 { return VOID; }
+=======
+#line 38 "scanner.l"
+{ return FLOAT; }
+	YY_BREAK
+case 10:
+YY_RULE_SETUP
+#line 39 "scanner.l"
+{ return CHAR; }
+	YY_BREAK
+case 11:
+YY_RULE_SETUP
+#line 40 "scanner.l"
+{ return VOID; }
+	YY_BREAK
+case 12:
+YY_RULE_SETUP
+#line 42 "scanner.l"
+{
+    yylval.intValue = atoi(yytext);
+    return NUM;
+}
+	YY_BREAK
+case 13:
+YY_RULE_SETUP
+#line 47 "scanner.l"
+{ return ID; }
+>>>>>>> main
 	YY_BREAK
 /* Literais de ponto flutuante: 10.5  10.  .5  1e3  2.5e-3 */
 case 14:
+<<<<<<< HEAD
 #line 60 "scanner.l"
 case 15:
 #line 61 "scanner.l"
@@ -935,28 +1043,54 @@ YY_RULE_SETUP
     yylval.realValue = strtod(yytext, NULL);
     return NUM_REAL;
 }
+=======
+YY_RULE_SETUP
+#line 49 "scanner.l"
+{ return PLUS; }
+	YY_BREAK
+case 15:
+YY_RULE_SETUP
+#line 50 "scanner.l"
+{ return MINUS; }
+	YY_BREAK
+case 16:
+YY_RULE_SETUP
+#line 51 "scanner.l"
+{ return TIMES; }
+>>>>>>> main
 	YY_BREAK
 /* Literal inteiro long: 10L */
 case 17:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 67 "scanner.l"
 {
     yylval.intValue = strtol(yytext, NULL, 10);
     return NUM_LONG;
 }
+=======
+#line 52 "scanner.l"
+{ return DIV; }
+>>>>>>> main
 	YY_BREAK
 /* Literal inteiro: 42 */
 case 18:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 73 "scanner.l"
 {
     yylval.intValue = strtol(yytext, NULL, 10);
     return NUM;
 }
+=======
+#line 53 "scanner.l"
+{ return ASSIGN; }
+>>>>>>> main
 	YY_BREAK
 /* Literal de caractere: 'a'  '\n'  '\'' */
 case 19:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 79 "scanner.l"
 {
     yylval.intValue = valor_char(yytext);
@@ -1020,9 +1154,69 @@ case 30:
 YY_RULE_SETUP
 #line 98 "scanner.l"
 { return LT; }
+=======
+#line 54 "scanner.l"
+{ return EQ; }
+	YY_BREAK
+case 20:
+YY_RULE_SETUP
+#line 55 "scanner.l"
+{ return NEQ; }
+	YY_BREAK
+case 21:
+YY_RULE_SETUP
+#line 56 "scanner.l"
+{ return LT; }
+	YY_BREAK
+case 22:
+YY_RULE_SETUP
+#line 57 "scanner.l"
+{ return LE; }
+	YY_BREAK
+case 23:
+YY_RULE_SETUP
+#line 58 "scanner.l"
+{ return GT; }
+	YY_BREAK
+case 24:
+YY_RULE_SETUP
+#line 59 "scanner.l"
+{ return GE; }
+	YY_BREAK
+case 25:
+YY_RULE_SETUP
+#line 61 "scanner.l"
+{ return LPAREN; }
+	YY_BREAK
+case 26:
+YY_RULE_SETUP
+#line 62 "scanner.l"
+{ return RPAREN; }
+	YY_BREAK
+case 27:
+YY_RULE_SETUP
+#line 63 "scanner.l"
+{ return LBRACE; }
+	YY_BREAK
+case 28:
+YY_RULE_SETUP
+#line 64 "scanner.l"
+{ return RBRACE; }
+	YY_BREAK
+case 29:
+YY_RULE_SETUP
+#line 65 "scanner.l"
+{ return COMMA; }
+	YY_BREAK
+case 30:
+YY_RULE_SETUP
+#line 66 "scanner.l"
+{ return SEMICOLON; }
+>>>>>>> main
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 99 "scanner.l"
 { return GT; }
 	YY_BREAK
@@ -1067,6 +1261,25 @@ YY_RULE_SETUP
 ECHO;
 	YY_BREAK
 #line 1070 "lex.yy.c"
+=======
+#line 68 "scanner.l"
+{ return NEWLINE; }   /* coluna já volta para 1 em atualiza_local() */
+	YY_BREAK
+case 32:
+YY_RULE_SETUP
+#line 70 "scanner.l"
+{
+            fprintf(stderr, "Erro Léxico [Linha %d, Col %d]: Caractere inesperado '%s'\n",
+                    yylloc.first_line, yylloc.first_column, yytext);
+        }
+	YY_BREAK
+case 33:
+YY_RULE_SETUP
+#line 75 "scanner.l"
+ECHO;
+	YY_BREAK
+#line 996 "lex.yy.c"
+>>>>>>> main
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1402,6 +1615,50 @@ static int yy_get_next_buffer (void)
 
 #ifndef YY_NO_UNPUT
 
+<<<<<<< HEAD
+=======
+    static void yyunput (int c, char * yy_bp )
+{
+	char *yy_cp;
+    
+    yy_cp = (yy_c_buf_p);
+
+	/* undo effects of setting up yytext */
+	*yy_cp = (yy_hold_char);
+
+	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
+		{ /* need to shift things up to make room */
+		/* +2 for EOB chars. */
+		int number_to_move = (yy_n_chars) + 2;
+		char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
+					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
+		char *source =
+				&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
+
+		while ( source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
+			*--dest = *--source;
+
+		yy_cp += (int) (dest - source);
+		yy_bp += (int) (dest - source);
+		YY_CURRENT_BUFFER_LVALUE->yy_n_chars =
+			(yy_n_chars) = (int) YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
+
+		if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
+			YY_FATAL_ERROR( "flex scanner push-back overflow" );
+		}
+
+	*--yy_cp = (char) c;
+
+    if ( c == '\n' ){
+        --yylineno;
+    }
+
+	(yytext_ptr) = yy_bp;
+	(yy_hold_char) = *yy_cp;
+	(yy_c_buf_p) = yy_cp;
+}
+
+>>>>>>> main
 #endif
 
 #ifndef YY_NO_INPUT
@@ -2042,6 +2299,43 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
+<<<<<<< HEAD
 #line 110 "scanner.l"
 
+=======
+#line 75 "scanner.l"
+
+
+/*
+ * Chamada antes de cada ação (via YY_USER_ACTION).
+ *
+ * Com %option yylineno, o Flex já somou em yylineno todas as quebras de
+ * linha do lexema ANTES de chegar aqui. Por isso:
+ *   - linha inicial = yylineno - (quebras dentro do lexema)
+ *   - se o lexema contém '\n', a próxima coluna é contada a partir
+ *     da última quebra (vale para "\n" e para comentários multilinha).
+ */
+static void atualiza_local(void) {
+    int quebras = 0;
+    int pos_ultima_quebra = -1;
+
+    for (int i = 0; i < yyleng; i++) {
+        if (yytext[i] == '\n') {
+            quebras++;
+            pos_ultima_quebra = i;
+        }
+    }
+
+    yylloc.first_line   = yylineno - quebras;
+    yylloc.last_line    = yylineno;
+    yylloc.first_column = yycolumn;
+
+    if (pos_ultima_quebra >= 0)
+        yycolumn = yyleng - pos_ultima_quebra;  /* 1 + caracteres após o último '\n' */
+    else
+        yycolumn += yyleng;
+
+    yylloc.last_column = yycolumn - 1;
+}
+>>>>>>> main
 

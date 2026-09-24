@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string.h>
 #include <unistd.h>
 #include "tabela.h"
 
@@ -359,6 +360,10 @@ int main(int argc, char **argv) {
        e mensagens de erro (stderr) quando os testes usam 2>&1 */
     setvbuf(stdout, NULL, _IONBF, 0);
 
+    /* stdout sem buffer: mantém a ordem correta entre resultados (stdout)
+       e mensagens de erro (stderr) quando os testes usam 2>&1 */
+    setvbuf(stdout, NULL, _IONBF, 0);
+
     FILE *f = NULL;                    // guarda referência para fechar depois
     if (argc > 1) {
         f = fopen(argv[1], "r");
@@ -383,3 +388,4 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
+

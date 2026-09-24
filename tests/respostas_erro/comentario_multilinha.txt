@@ -1,0 +1,3 @@
+7
+Erro Léxico [Linha 7, Col 5]: Caractere inesperado '$'
+Erro Sintático [Linha 7]: syntax error
