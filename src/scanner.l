@@ -3,35 +3,57 @@
 /* Universidade de Brasília (UnB) */
 
 %{
-#include "parser.tab.h"  /* Cabeçalho gerado pelo Bison */
-#include <stdlib.h>       /* strtol() */
+#include "parser.tab.h"   /* Cabeçalho gerado pelo Bison (bison -d parser.y) */
+#include <stdlib.h>       /* strtol, strtod */
 #include <stdio.h>
+#include <string.h>       /* strdup */
 #include <errno.h>        /* errno / ERANGE */
 #include <limits.h>       /* INT_MAX */
 
 int yycolumn = 1;
 
-/* Definida no parser.y: marca que a linha atual teve erro
-   e, por isso, não deve imprimir resultado */
-extern int erro_na_linha;
+/* Definidas no parser.y:
+ *  - erro_na_instrucao: a instrução atual teve erro e não deve imprimir resultado
+ *  - erros_lexicos: total de erros léxicos (define o código de saída) */
+extern int erro_na_instrucao;
+extern int erros_lexicos;
+
+/* Registra um erro léxico na posição do lexema atual */
+#define ERRO_LEXICO(...) do {                                              \
+        fprintf(stderr, "Erro Léxico [Linha %d, Col %d]: ",                \
+                yylloc.first_line, yylloc.first_column);                   \
+        fprintf(stderr, __VA_ARGS__);                                      \
+        fputc('\n', stderr);                                               \
+        erro_na_instrucao = 1;                                             \
+        erros_lexicos++;                                                   \
+    } while (0)
 
 /* Atualiza yylloc a partir do lexema atual (definida no fim do arquivo) */
 static void atualiza_local(void);
+
+/* Converte um literal de caractere ('a', '\n', ...) no seu código */
+static char valor_char(const char *texto);
 
 /* Executada automaticamente antes da ação de TODA regra */
 #define YY_USER_ACTION atualiza_local();
 %}
 
-/* Opção para evitar ter que linkar com -lfl e dispensar a função yywrap */
-%option noyywrap
+/* noyywrap: dispensa yywrap/-lfl.  nounput/noinput: evitam warnings de funções não usadas. */
+%option noyywrap nounput noinput
 
 /* O Flex incrementa yylineno sozinho a cada '\n' casado.
    NUNCA faça yylineno++ manualmente nas regras. */
 %option yylineno
 
+DIGITO     [0-9]
+LETRA      [a-zA-Z_]
+EXPOENTE   [eE][+-]?{DIGITO}+
+
 %%
 
 [ \t\r]+                { /* ignora espaços, tabs e CR residual do Windows */ }
+"\n"                    { /* quebra de linha não tem significado (fim de instrução é ';');
+                             a coluna volta para 1 em atualiza_local() */ }
 "//".*                  { /* ignora comentários de linha */ }
 
 "/*"([^*]|\*+[^*/])*\*+"/" { /* comentário multilinha fechado: ignora */ }
@@ -40,66 +62,105 @@ static void atualiza_local(void);
     // Comentário que nunca foi fechado: casa da abertura até o fim do arquivo.
     // Quando o comentário está fechado, a regra de cima casa um caractere
     // a mais (a barra final) e vence pela regra do maior casamento.
-    fprintf(stderr, "Erro Léxico [Linha %d, Col %d]: Comentário não fechado\n",
-            yylloc.first_line, yylloc.first_column);
-    // Fecha a linha atual para o parser não gerar um erro sintático em cascata
-    erro_na_linha = 1;
-    return NEWLINE;
+    ERRO_LEXICO("Comentário não fechado");
+    // Fecha a instrução atual para o parser não gerar um erro sintático em cascata
+    return SEMICOLON;
 }
 
+ /* Palavras-reservadas (precisam vir ANTES da regra de ID) */
 "if"                    { return IF; }
 "else"                  { return ELSE; }
 "while"                 { return WHILE; }
 "return"                { return RETURN; }
 "int"                   { return INT; }
-"float"                 { return FLOAT; }
 "char"                  { return CHAR; }
+"float"                 { return FLOAT; }
+"double"                { return DOUBLE; }
+"long"                  { return LONG; }
 "void"                  { return VOID; }
 
-[0-9]+  {
+ /* Literais de ponto flutuante: 10.5  10.  .5  1e3  2.5e-3 */
+{DIGITO}+"."{DIGITO}*{EXPOENTE}?  |
+"."{DIGITO}+{EXPOENTE}?          |
+{DIGITO}+{EXPOENTE}              {
+    yylval.realValue = strtod(yytext, NULL);
+    return NUM_REAL;
+}
+
+ /* Literal inteiro long: 10L */
+{DIGITO}+[lL]  {
+    errno = 0;
+    long valor = strtol(yytext, NULL, 10);
+    if (errno == ERANGE) {
+        ERRO_LEXICO("Número muito grande '%s' (máximo %ld)", yytext, LONG_MAX);
+        valor = 0;
+    }
+    yylval.intValue = valor;
+    return NUM_LONG;
+}
+
+ /* Literal inteiro: 42 */
+{DIGITO}+  {
     errno = 0;
     long valor = strtol(yytext, NULL, 10);
     if (errno == ERANGE || valor > INT_MAX) {
-        fprintf(stderr, "Erro Léxico [Linha %d, Col %d]: Número muito grande '%s' (máximo %d)\n",
-                yylloc.first_line, yylloc.first_column, yytext, INT_MAX);
-        erro_na_linha = 1;
-        yylval.intValue = 0;
-    } else {
-        yylval.intValue = (int) valor;
+        ERRO_LEXICO("Número muito grande '%s' (máximo %d)", yytext, INT_MAX);
+        valor = 0;
     }
+    yylval.intValue = valor;
     return NUM;
 }
 
-[a-zA-Z_][a-zA-Z0-9_]*  { return ID; }
+ /* Literal de caractere: 'a'  '\n'  '\'' */
+\'([^'\\\n]|\\.)\'  {
+    yylval.intValue = valor_char(yytext);
+    return CARACTERE;
+}
+
+{LETRA}({LETRA}|{DIGITO})*  {
+    yylval.strValue = strdup(yytext);
+    return ID;
+}
 
 "+"     { return PLUS; }
 "-"     { return MINUS; }
 "*"     { return TIMES; }
 "/"     { return DIV; }
-"="     { return ASSIGN; }
 "=="    { return EQ; }
 "!="    { return NEQ; }
-"<"     { return LT; }
 "<="    { return LE; }
-">"     { return GT; }
 ">="    { return GE; }
+"="     { return ASSIGN; }
+"<"     { return LT; }
+">"     { return GT; }
 
 "("     { return LPAREN; }
 ")"     { return RPAREN; }
 "{"     { return LBRACE; }
 "}"     { return RBRACE; }
 ","     { return COMMA; }
-";"     { return SEMICOLON; }
+";"     { return SEMICOLON; }   /* fim de instrução */
 
-"\n"    { return NEWLINE; }   /* coluna já volta para 1 em atualiza_local() */
-
-.       {
-            fprintf(stderr, "Erro Léxico [Linha %d, Col %d]: Caractere inesperado '%s'\n",
-                    yylloc.first_line, yylloc.first_column, yytext);
-            erro_na_linha = 1;
-        }
+.       { ERRO_LEXICO("Caractere inesperado '%s'", yytext); }
 
 %%
+
+static char valor_char(const char *texto) {
+    /* texto aponta para algo como  'a'  ou  '\n'  */
+    if (texto[1] != '\\') {
+        return texto[1];
+    }
+    switch (texto[2]) {
+        case 'n':  return '\n';
+        case 't':  return '\t';
+        case 'r':  return '\r';
+        case '0':  return '\0';
+        case '\\': return '\\';
+        case '\'': return '\'';
+        case '"':  return '"';
+        default:   return texto[2];
+    }
+}
 
 /*
  * Chamada antes de cada ação (via YY_USER_ACTION).
