@@ -1,1 +1,1 @@
-Erro de Sintaxe: syntax error
+Erro Semântico [Linha 1, Col 1]: Variável 'x' não declarada

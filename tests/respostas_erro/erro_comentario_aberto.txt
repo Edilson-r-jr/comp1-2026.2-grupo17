@@ -1,0 +1,1 @@
+Erro Léxico [Linha 2, Col 1]: Comentário não fechado

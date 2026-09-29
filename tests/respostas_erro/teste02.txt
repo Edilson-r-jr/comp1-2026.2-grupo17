@@ -1,2 +1,0 @@
-Erro de Sintaxe: Erro de divisão por zero!
-Erro de Sintaxe: syntax error
