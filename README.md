@@ -107,42 +107,51 @@ A tabela a seguir lista os recursos que não farão parte do projeto e o motivo 
 | Biblioteca padrão além de `printf`/`scanf` (`math.h`, `stdlib.h`, arquivos)                         | Está fora do objetivo do trabalho.                                                                     |
 | `argc`/`argv`, threads, sinais                                                                      | Dependem do sistema operacional.                                                                       |
 
-**Integrantes**
 
-**Nome:** Edilson Ribeiro da Cruz Júnior
-
-**Matricula:** 222024461
-
-**GitHub:** (https://github.com/Edilson-r-jr)
-
-<br>
-
-**Nome:** Marcus Vinicius Rezende dos Santos
-
-**Matricula:** 232038335
-
-**GitHub:** (https://github.com/MarcusVRezende)
-
-<br>
-
-**Nome:** Maria Laura Regis Cabral Dias
-
-**Matricula:** 232005361
-
-**GitHub:** (https://github.com/Maria-Laura-Regis)
-
-<br>
-
-**Nome:** Miqueias Ezequiel Gonçalves Carvalho
-
-**Matricula:** 232005450
-
-**GitHub:** (https://github.com/Kael-web7)
-
-<br>
-
-**Nome:** Pedro Henrique Conceição De Souza
-
-**Matricula:** 232030032
-
-**GitHub:** (https://github.com/PedroHenriqueCo)
+## Integrantes
+ 
+<table align="center">
+  <tr>
+    <td align="center" width="160">
+      <a href="https://github.com/Edilson-r-jr">
+        <img src="https://github.com/Edilson-r-jr.png?size=200" width="100" alt="Foto de Edilson"/><br/>
+        <b>Edilson Júnior</b>
+      </a><br/>
+      <sub>Edilson Ribeiro da Cruz Júnior</sub><br/>
+      <sub>222024461</sub>
+    </td>
+    <td align="center" width="160">
+      <a href="https://github.com/MarcusVRezende">
+        <img src="https://github.com/MarcusVRezende.png?size=200" width="100" alt="Foto de Marcus"/><br/>
+        <b>Marcus Rezende</b>
+      </a><br/>
+      <sub>Marcus Vinicius Rezende dos Santos</sub><br/>
+      <sub>232038335</sub>
+    </td>
+    <td align="center" width="160">
+      <a href="https://github.com/Maria-Laura-Regis">
+        <img src="https://github.com/Maria-Laura-Regis.png?size=200" width="100" alt="Foto de Maria Laura"/><br/>
+        <b>Maria Laura</b>
+      </a><br/>
+      <sub>Maria Laura Regis Cabral Dias</sub><br/>
+      <sub>232005361</sub>
+    </td>
+    <td align="center" width="160">
+      <a href="https://github.com/Kael-web7">
+        <img src="https://github.com/Kael-web7.png?size=200" width="100" alt="Foto de Miqueias"/><br/>
+        <b>Miqueias Carvalho</b>
+      </a><br/>
+      <sub>Miqueias Ezequiel Gonçalves Carvalho</sub><br/>
+      <sub>232005450</sub>
+    </td>
+    <td align="center" width="160">
+      <a href="https://github.com/PedroHenriqueCo">
+        <img src="https://github.com/PedroHenriqueCo.png?size=200" width="100" alt="Foto de Pedro Henrique"/><br/>
+        <b>Pedro Henrique</b>
+      </a><br/>
+      <sub>Pedro Henrique Conceição De Souza</sub><br/>
+      <sub>232030032</sub>
+    </td>
+  </tr>
+</table>
+ 
