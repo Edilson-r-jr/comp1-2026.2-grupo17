@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string.h>
 #include <unistd.h>
 #include "tabela.h"
 
@@ -21,6 +20,10 @@ static int erros_sintaticos = 0;
 
 /* Posição usada nas mensagens de erro semântico (ver tabela.h) */
 #define POSICAO(loc) definir_posicao((loc).first_line, (loc).first_column)
+
+/* Escopo atual. Por enquanto só existe o global; quando houver blocos
+   e funções, o parser passa a incrementar/decrementar este valor. */
+static int escopo_atual = ESCOPO_GLOBAL;
 %}
 
 /* Tipo do valor semântico de uma expressão.
@@ -44,6 +47,7 @@ static Valor converter(Valor v, int tipo);
 static Valor operacao(Valor a, char op, Valor b);
 static Valor ler_variavel(char *nome);
 static void atribuir(char *nome, Valor v);
+static Simbolo *declarar(char *nome, int tipo, YYLTYPE loc);
 static void imprimir(Valor v);
 }
 
@@ -120,17 +124,13 @@ instrucao:
 
 declaracao:
     tipo ID SEMICOLON {
-        POSICAO(@2);
-        inserir_variavel($2, (int)$1);
+        declarar($2, (int)$1, @2);
         free($2);
     }
     | tipo ID ASSIGN exp SEMICOLON {
-        POSICAO(@2);
-        if (buscar_variavel($2) == NULL) {
-            inserir_variavel($2, (int)$1);
+        /* Só inicializa se a declaração foi aceita (sem redeclaração) */
+        if (declarar($2, (int)$1, @2) != NULL) {
             atribuir($2, $4);
-        } else {
-            inserir_variavel($2, (int)$1);   /* reporta a redeclaração */
         }
         free($2);
     }
@@ -212,7 +212,7 @@ static Valor operacao(Valor a, char op, Valor b) {
             case '-': r = a.r - b.r; break;
             case '*': r = a.r * b.r; break;
             case '/':
-                if (b.r == 0.0) { erro_semantico("Divisão por zero!%s", ""); return valor_invalido(); }
+                if (b.r == 0.0) { erro_semantico("Divisão por zero!"); return valor_invalido(); }
                 r = a.r / b.r;
                 break;
         }
@@ -224,7 +224,7 @@ static Valor operacao(Valor a, char op, Valor b) {
             case '-': i = a.i - b.i; break;
             case '*': i = a.i * b.i; break;
             case '/':
-                if (b.i == 0) { erro_semantico("Divisão por zero!%s", ""); return valor_invalido(); }
+                if (b.i == 0) { erro_semantico("Divisão por zero!"); return valor_invalido(); }
                 i = a.i / b.i;
                 break;
         }
@@ -232,25 +232,33 @@ static Valor operacao(Valor a, char op, Valor b) {
     }
 }
 
+/* Declaração de variável: registra na tabela com a posição do nome.
+ * Retorna NULL se for redeclaração (o erro já foi reportado pela tabela). */
+static Simbolo *declarar(char *nome, int tipo, YYLTYPE loc) {
+    definir_posicao(loc.first_line, loc.first_column);
+    return tabela_inserir(nome, CAT_VARIAVEL, (Tipo)tipo, escopo_atual,
+                          loc.first_line, loc.first_column);
+}
+
 /* Uso de variável: precisa ter sido declarada antes. */
 static Valor ler_variavel(char *nome) {
-    if (verificar_tipo(nome) == TIPO_INEXISTENTE) {
+    Simbolo *s = tabela_buscar(nome, escopo_atual);
+    if (s == NULL) {
         erro_semantico("Variável '%s' não declarada", nome);
         return valor_invalido();
     }
-    Simbolo *s = buscar_variavel(nome);
     return tipo_eh_real(s->tipo) ? valor_real(s->tipo, s->valor_real)
                                  : valor_int(s->tipo, s->valor_int);
 }
 
 /* Atribuição: a variável precisa existir; o valor é convertido para o tipo dela. */
 static void atribuir(char *nome, Valor v) {
-    if (verificar_tipo(nome) == TIPO_INEXISTENTE) {
+    Simbolo *s = tabela_buscar(nome, escopo_atual);
+    if (s == NULL) {
         erro_semantico("Variável '%s' não declarada", nome);
         return;
     }
     if (!v.ok) return;
-    Simbolo *s = buscar_variavel(nome);
     v = converter(v, s->tipo);
     s->valor_int = v.i;
     s->valor_real = v.r;
@@ -360,13 +368,20 @@ int main(int argc, char **argv) {
        e mensagens de erro (stderr) quando os testes usam 2>&1 */
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    /* stdout sem buffer: mantém a ordem correta entre resultados (stdout)
-       e mensagens de erro (stderr) quando os testes usam 2>&1 */
-    setvbuf(stdout, NULL, _IONBF, 0);
+    /* Uso: ./parser [--tabela] [arquivo]
+       --tabela imprime a tabela de símbolos ao final da análise */
+    int mostrar_tabela = 0;
+    const char *arquivo = NULL;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--tabela") == 0 || strcmp(argv[i], "-t") == 0)
+            mostrar_tabela = 1;
+        else
+            arquivo = argv[i];
+    }
 
     FILE *f = NULL;                    // guarda referência para fechar depois
-    if (argc > 1) {
-        f = fopen(argv[1], "r");
+    if (arquivo) {
+        f = fopen(arquivo, "r");
         if (!f) {
             perror("Erro ao abrir o arquivo fornecido");
             return 1;
@@ -380,7 +395,12 @@ int main(int argc, char **argv) {
     int resultado = yyparse();
 
     if (f) fclose(f);
-    liberar_tabela();
+
+    if (mostrar_tabela) {
+        printf("\n--- Tabela de Símbolos ---\n");
+        tabela_imprimir(stdout);
+    }
+    tabela_liberar();
 
     /* O programa é rejeitado se houve qualquer erro léxico, sintático ou semântico */
     if (resultado != 0 || erros_lexicos > 0 || erros_sintaticos > 0 || erros_semanticos > 0) {
@@ -388,4 +408,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-

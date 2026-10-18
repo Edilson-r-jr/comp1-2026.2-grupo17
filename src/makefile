@@ -5,6 +5,7 @@ BISON_C = parser.tab.c
 BISON_H = parser.tab.h
 FLEX_C  = lex.yy.c
 HEADERS = tabela.h
+SOURCES = tabela.c
 
 CC     = gcc
 CFLAGS = -Wall -Wextra -std=gnu11
@@ -12,8 +13,8 @@ CFLAGS = -Wall -Wextra -std=gnu11
 all: $(EXEC)
 
 # Não precisa de -lfl: o scanner usa %option noyywrap e o main está no parser.y
-$(EXEC): $(BISON_C) $(FLEX_C) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(BISON_C) $(FLEX_C)
+$(EXEC): $(BISON_C) $(FLEX_C) $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ $(BISON_C) $(FLEX_C) $(SOURCES)
 
 $(BISON_C) $(BISON_H): $(BISON_FILE)
 	bison -d -Wall $(BISON_FILE)
