@@ -1,0 +1,6 @@
+
+--- Tabela de Símbolos ---
+NOME         CATEGORIA  TIPO    ESCOPO  LINHA
+a            variavel   int     global  1
+b            variavel   int     global  2
+soma         variavel   int     global  3

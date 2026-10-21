@@ -1,0 +1,8 @@
+
+--- Tabela de Símbolos ---
+NOME         CATEGORIA  TIPO    ESCOPO  LINHA
+c            variavel   char    global  1
+i            variavel   int     global  2
+l            variavel   long    global  3
+f            variavel   float   global  4
+d            variavel   double  global  5

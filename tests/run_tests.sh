@@ -18,6 +18,8 @@ DIR_TESTES="entradas"
 DIR_RESPOSTAS="respostas"
 DIR_TESTES_ERRO="entradas_erro"
 DIR_RESPOSTAS_ERRO="respostas_erro"
+DIR_TESTES_TABELA="entradas_tabela"
+DIR_RESPOSTAS_TABELA="respostas_tabela"
 
 echo -e "${AMARELO}==> Rodando bateria de testes...${RESET}\n"
 
@@ -116,6 +118,44 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES_ERRO"/*.txt; do
             echo "--- Diferenças ---"; diff "$ARQUIVO_RESPOSTA" "$ERROS"; echo ""
             echo "--- stdout capturado (deveria estar vazio) ---"
             [ -s "$RESULTADO" ] && cat "$RESULTADO" || echo "(vazio)"
+            echo ""
+        } >> "$RELATORIO"
+    fi
+    ((TOTAL++))
+done
+
+# ---------- Testes da tabela de símbolos (compara stdout com --tabela) ----------
+for ARQUIVO_ENTRADA in "$DIR_TESTES_TABELA"/*.txt; do
+    NOME_TESTE=$(basename "$ARQUIVO_ENTRADA" .txt)
+    ARQUIVO_RESPOSTA="$DIR_RESPOSTAS_TABELA/$NOME_TESTE.txt"
+
+    if [ ! -f "$ARQUIVO_RESPOSTA" ]; then
+        echo -e "${VERMELHO}[ERRO] Sem resposta de tabela para '$NOME_TESTE'.${RESET}"
+        ((IGNORADOS++)); continue
+    fi
+
+    echo -e "${AMARELO}Rodando teste (tabela): $NOME_TESTE${RESET}"
+    "$EXECUTAVEL" --tabela < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
+    STATUS=$?
+
+    if diff -q "$RESULTADO" "$ARQUIVO_RESPOSTA" > /dev/null; then
+        echo -e "${VERDE}[OK] '$NOME_TESTE' passou.${RESET}\n"
+        ((PASSOU++))
+    else
+        echo -e "${VERMELHO}[FALHA] '$NOME_TESTE' não bateu com a tabela esperada.${RESET}\n"
+        FALHAS+=("$NOME_TESTE (tabela)")
+        ((FALHOU++))
+        {
+            echo "----------------------------------------"
+            echo "TESTE DE TABELA FALHOU: $NOME_TESTE"
+            echo "Código de saída: $STATUS"
+            echo ""
+            echo "--- Entrada ---"; cat "$ARQUIVO_ENTRADA"; echo ""
+            echo "--- Saída esperada ---"; cat "$ARQUIVO_RESPOSTA"; echo ""
+            echo "--- Saída obtida ---"; cat "$RESULTADO"; echo ""
+            echo "--- Diferenças ---"; diff "$ARQUIVO_RESPOSTA" "$RESULTADO"; echo ""
+            echo "--- stderr ---"
+            [ -s "$ERROS" ] && cat "$ERROS" || echo "(vazio)"
             echo ""
         } >> "$RELATORIO"
     fi

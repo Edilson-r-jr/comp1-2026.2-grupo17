@@ -1,0 +1,5 @@
+char c;
+int i = 1;
+long l = 2L;
+float f = 1.5;
+double d = f * 2;

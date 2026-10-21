@@ -4,8 +4,8 @@ FLEX_FILE  = scanner.l
 BISON_C = parser.tab.c
 BISON_H = parser.tab.h
 FLEX_C  = lex.yy.c
-AST_C   = ast.c
 HEADERS = tabela.h ast.h
+SOURCES = tabela.c ast.c
 
 CC     = gcc
 # Adicionada a flag -g para facilitar o debug de memória com o valgrind
@@ -13,9 +13,9 @@ CFLAGS = -Wall -Wextra -g -std=gnu11
 
 all: $(EXEC)
 
-# Adicionado $(AST_C) nas dependências e no comando de compilação
-$(EXEC): $(BISON_C) $(FLEX_C) $(AST_C) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(BISON_C) $(FLEX_C) $(AST_C)
+# Não precisa de -lfl: o scanner usa %option noyywrap e o main está no parser.y
+$(EXEC): $(BISON_C) $(FLEX_C) $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ $(BISON_C) $(FLEX_C) $(SOURCES)
 
 $(BISON_C) $(BISON_H): $(BISON_FILE)
 	bison -d -Wall $(BISON_FILE)
