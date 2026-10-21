@@ -4,11 +4,12 @@ FLEX_FILE  = scanner.l
 BISON_C = parser.tab.c
 BISON_H = parser.tab.h
 FLEX_C  = lex.yy.c
-HEADERS = tabela.h
-SOURCES = tabela.c
+HEADERS = tabela.h ast.h
+SOURCES = tabela.c ast.c
 
 CC     = gcc
-CFLAGS = -Wall -Wextra -std=gnu11
+# Adicionada a flag -g para facilitar o debug de memória com o valgrind
+CFLAGS = -Wall -Wextra -g -std=gnu11
 
 all: $(EXEC)
 
@@ -22,8 +23,10 @@ $(BISON_C) $(BISON_H): $(BISON_FILE)
 $(FLEX_C): $(FLEX_FILE) $(BISON_H)
 	flex $(FLEX_FILE)
 
+# Os scripts ficam em ../tests (o makefile roda dentro de src/)
 test: $(EXEC)
-	tests/run_tests.sh
+	../tests/run_tests.sh
+	../tests/run_ast_tests.sh
 
 clean:
 	rm -f $(EXEC) $(BISON_C) $(BISON_H) $(FLEX_C)
