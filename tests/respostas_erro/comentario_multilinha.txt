@@ -1,3 +1,2 @@
-7
 Erro Léxico [Linha 7, Col 5]: Caractere inesperado '$'
-Erro Sintático [Linha 7]: syntax error
+Erro Sintático [Linha 7, Col 6]: encontrado ';', mas era esperado número, número long, caractere, número real, identificador, '-' ou '('

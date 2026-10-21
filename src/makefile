@@ -23,8 +23,10 @@ $(BISON_C) $(BISON_H): $(BISON_FILE)
 $(FLEX_C): $(FLEX_FILE) $(BISON_H)
 	flex $(FLEX_FILE)
 
+# Os scripts ficam em ../tests (o makefile roda dentro de src/)
 test: $(EXEC)
-	tests/run_tests.sh
+	../tests/run_tests.sh
+	../tests/run_ast_tests.sh
 
 clean:
 	rm -f $(EXEC) $(BISON_C) $(BISON_H) $(FLEX_C)
