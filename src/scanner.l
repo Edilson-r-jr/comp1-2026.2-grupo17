@@ -1,3 +1,4 @@
+
 /* FGA0003 - Compiladores 1 */
 /* Curso de Engenharia de Software */
 /* Universidade de Brasília (UnB) */
@@ -50,6 +51,9 @@ LETRA      [a-zA-Z_]
 EXPOENTE   [eE][+-]?{DIGITO}+
 
 %%
+
+ /* Ignora BOM UTF-8 (EF BB BF) no início do arquivo */
+^\xEF\xBB\xBF    { yycolumn = 1; }
 
 [ \t\r]+                { /* ignora espaços, tabs e CR residual do Windows */ }
 "\n"                    { /* quebra de linha não tem significado (fim de instrução é ';');
@@ -187,7 +191,7 @@ static void atualiza_local(void) {
     yylloc.first_column = yycolumn;
 
     if (pos_ultima_quebra >= 0)
-        yycolumn = yyleng - pos_ultima_quebra;  /* 1 + caracteres após o último '\n' */
+        yycolumn = yyleng - pos_ultima_quebra;
     else
         yycolumn += yyleng;
 
