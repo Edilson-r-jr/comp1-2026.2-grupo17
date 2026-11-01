@@ -9,7 +9,7 @@ BIN=tests/test_ast
 SAIDA=$(mktemp)
 trap 'rm -f "$BIN" "$SAIDA"' EXIT
 
-if ! gcc -Wall -Wextra -Werror -std=gnu11 -g -Isrc tests/test_ast.c src/ast.c -o "$BIN"; then
+if ! gcc -Wall -Wextra -Werror -std=gnu11 -g -Isrc tests/test_ast.c src/ast.c src/tabela.c -o "$BIN"; then
     echo "Teste da AST: FALHOU (compilação)"
     exit 1
 fi

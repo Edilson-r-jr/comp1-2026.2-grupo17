@@ -1,3 +1,7 @@
 src/lex.yy.c
 src/parser.tab.c
 src/parser.tab.h
+src/parser
+src/parser.exe
+tests/relatorio.txt
+tests/test_ast

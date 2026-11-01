@@ -31,6 +31,9 @@ typedef enum
     TIPO_VOID
 } Tipo;
 
+/* Tipo ainda não definido (ex.: nó da AST antes da análise semântica) */
+#define TIPO_INEXISTENTE (-1)
+
 /* O que o nome representa no programa. */
 typedef enum
 {
