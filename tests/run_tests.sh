@@ -8,7 +8,9 @@ VERMELHO='\033[0;31m'
 AMARELO='\033[1;33m'
 RESET='\033[0m'
 
-EXECUTAVEL="../src/parser.exe"
+# Linux/WSL gera "parser"; Windows (MinGW) gera "parser.exe"
+EXECUTAVEL="../src/parser"
+[ -f "$EXECUTAVEL" ] || EXECUTAVEL="../src/parser.exe"
 RESULTADO="/tmp/resultado.txt"
 ERROS="/tmp/erros.txt"
 RELATORIO="relatorio.txt"
