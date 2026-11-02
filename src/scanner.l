@@ -1,8 +1,6 @@
-
 /* FGA0003 - Compiladores 1 */
 /* Curso de Engenharia de Software */
 /* Universidade de Brasília (UnB) */
-
 %{
 #include "parser.tab.h"   /* Cabeçalho gerado pelo Bison (bison -d parser.y) */
 #include <stdlib.h>       /* strtol, strtod */
@@ -191,7 +189,7 @@ static void atualiza_local(void) {
     yylloc.first_column = yycolumn;
 
     if (pos_ultima_quebra >= 0)
-        yycolumn = yyleng - pos_ultima_quebra;
+        yycolumn = yyleng - pos_ultima_quebra; /* 1 + caracteres após o último '\n' */
     else
         yycolumn += yyleng;
 

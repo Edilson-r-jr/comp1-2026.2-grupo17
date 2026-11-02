@@ -80,7 +80,6 @@ NoAST *ast_criar_menos_unario(NoAST *operando, int linha, int coluna)
 NoAST *ast_criar_declaracao(int tipo_c, const char *nome, NoAST *inicializacao,
                             int linha, int coluna)
 {
-
     NoAST *no = criar_no_base(AST_DECLARACAO, linha, coluna);
     no->tipo_c = tipo_c;
     no->texto = copiar_texto(nome);

@@ -1,1 +1,11 @@
-15
+AST_PROGRAMA
+  AST_EXPRESSAO
+    AST_SOMA
+      AST_SOMA
+        AST_SOMA
+          AST_SOMA
+            AST_NUMERO (1)
+            AST_NUMERO (2)
+          AST_NUMERO (3)
+        AST_NUMERO (4)
+      AST_NUMERO (5)
