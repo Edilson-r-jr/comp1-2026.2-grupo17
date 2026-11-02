@@ -8,7 +8,9 @@ VERMELHO='\033[0;31m'
 AMARELO='\033[1;33m'
 RESET='\033[0m'
 
+# Linux/WSL gera "parser"; Windows (MinGW) gera "parser.exe"
 EXECUTAVEL="../src/parser"
+[ -f "$EXECUTAVEL" ] || EXECUTAVEL="../src/parser.exe"
 RESULTADO="/tmp/resultado.txt"
 ERROS="/tmp/erros.txt"
 RELATORIO="relatorio.txt"
@@ -54,7 +56,8 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES"/*.txt; do
     fi
 
     echo -e "${AMARELO}Rodando teste (saída): $NOME_TESTE${RESET}"
-    "$EXECUTAVEL" < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
+    # ADICIONADA A FLAG --ast AQUI
+    "$EXECUTAVEL" --ast < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
     STATUS=$?
 
     if diff -q "$RESULTADO" "$ARQUIVO_RESPOSTA" > /dev/null; then

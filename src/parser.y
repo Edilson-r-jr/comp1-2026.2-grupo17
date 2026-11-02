@@ -24,31 +24,20 @@ static int erros_sintaticos = 0;
 /* Escopo atual. Por enquanto só existe o global; quando houver blocos
    e funções, o parser passa a incrementar/decrementar este valor. */
 static int escopo_atual = ESCOPO_GLOBAL;
+
+/* Variável global que guardará a raiz da AST ao final do parsing */
+struct NoAST *ast_raiz_programa = NULL;
 %}
 
-/* Tipo do valor semântico de uma expressão.
- * Vai para o parser.tab.h porque é usado dentro do %union. */
+/* INJEÇÃO NO HEADER: Garante que parser.tab.h conheça ast.h antes do %union */
 %code requires {
-    typedef struct {
-        int tipo;       /* um dos TIPO_* de tabela.h */
-        long i;         /* valor se o tipo for char/int/long */
-        double r;       /* valor se o tipo for float/double */
-        int ok;         /* 0 se a expressão contém erro semântico */
-    } Valor;
+    #include "ast.h"
 }
 
-/* Protótipos que dependem de Valor (emitidos depois da definição do YYSTYPE) */
+/* Protótipos auxiliares emitidos depois das definições (substitui lógica de Valor) */
 %code {
-/* Funções auxiliares de expressões (definidas no final do arquivo) */
-static Valor valor_int(int tipo, long v);
-static Valor valor_real(int tipo, double v);
-static Valor valor_invalido(void);
-static Valor converter(Valor v, int tipo);
-static Valor operacao(Valor a, char op, Valor b);
-static Valor ler_variavel(char *nome);
-static void atribuir(char *nome, Valor v);
 static Simbolo *declarar(char *nome, int tipo, YYLTYPE loc);
-static void imprimir(Valor v);
+static void checar_variavel(char *nome, YYLTYPE loc);
 }
 
 /* Define a estrutura yylval que compartilha dados entre Flex e Bison */
@@ -56,7 +45,7 @@ static void imprimir(Valor v);
     long intValue;
     double realValue;
     char *strValue;
-    Valor valor;
+    struct NoAST *no; /* CORREÇÃO: Uso de 'struct' para evitar conflito de importação no Flex */
 }
 
 /* Habilita @N e yylloc (linha/coluna) */
@@ -81,11 +70,19 @@ static void imprimir(Valor v);
 %token LBRACE RBRACE COMMA
 %token SEMICOLON   /* fim de instrução */
 
-%type <valor>    exp
+/* Declara os tipos não-terminais que agora retornam nós da AST */
+%type <no>       exp instrucao declaracao programa
 %type <intValue> tipo
 
 /* Libera o nome do ID se ele for descartado durante a recuperação de erro */
 %destructor { free($$); } <strValue>
+/* Libera a subárvore da memória caso haja erro sintático no meio dela */
+%destructor { ast_liberar($$); } <no>
+/* EXCEÇÃO: a lista de instruções de 'programa' já pertence a ast_raiz_programa
+ * (ast_raiz_programa->esq) e é liberada no main. Sem este destructor vazio, o
+ * Bison libera a lista inteira ao fim do parse (símbolo inicial) e a AST fica
+ * com ponteiros inválidos, além de dar double free no main. */
+%destructor { } programa
 
 /* Precedência de operadores (de baixo para cima = maior precedência) */
 %left PLUS MINUS
@@ -97,27 +94,35 @@ static void imprimir(Valor v);
 /* Um programa é uma sequência (possivelmente vazia) de instruções,
  * cada uma terminada por ';'. Quebras de linha não têm significado. */
 programa:
-    %empty    /* programa vazio */
+    %empty { 
+        $$ = NULL; 
+        ast_raiz_programa = ast_criar_programa(NULL); /* Inicia a raiz do programa vazia */
+    }
     | programa instrucao {
+        $$ = ast_anexar($1, $2);
+        ast_raiz_programa->esq = $$; /* Encadeia a instrução na raiz global */
         erro_na_instrucao = 0;
     }
     ;
 
 instrucao:
-    SEMICOLON                         /* instrução vazia */
-    | declaracao
+    SEMICOLON {
+        $$ = NULL; /* instrução vazia */
+    }
+    | declaracao {
+        $$ = $1;
+    }
     | ID ASSIGN exp SEMICOLON {
-        POSICAO(@1);
-        atribuir($1, $3);
+        checar_variavel($1, @1);
+        $$ = ast_criar_atribuicao($1, $3, @1.first_line, @1.first_column);
         free($1);
     }
     | exp SEMICOLON {
-        if (!erro_na_instrucao) {
-            imprimir($1);
-        }
+        $$ = ast_criar_expressao($1, @1.first_line, @1.first_column);
     }
     | error SEMICOLON {
-        /* Recuperação de erro sintático: descarta até o próximo ';' */
+        /* Recuperação de erro sintático: descarta até o próximo ';' e retorna NULL para a AST ignorar */
+        $$ = NULL; 
         yyerrok;
     }
     ;
@@ -125,13 +130,13 @@ instrucao:
 declaracao:
     tipo ID SEMICOLON {
         declarar($2, (int)$1, @2);
+        $$ = ast_criar_declaracao((int)$1, $2, NULL, @2.first_line, @2.first_column);
         free($2);
     }
     | tipo ID ASSIGN exp SEMICOLON {
-        /* Só inicializa se a declaração foi aceita (sem redeclaração) */
-        if (declarar($2, (int)$1, @2) != NULL) {
-            atribuir($2, $4);
-        }
+        /* Mantendo o aviso provisório de redeclaração na tabela */
+        declarar($2, (int)$1, @2); 
+        $$ = ast_criar_declaracao((int)$1, $2, $4, @2.first_line, @2.first_column);
         free($2);
     }
     ;
@@ -145,92 +150,36 @@ tipo:
     ;
 
 exp:
-    NUM                     { $$ = valor_int(TIPO_INT, $1); }
-    | NUM_LONG              { $$ = valor_int(TIPO_LONG, $1); }
-    | CARACTERE             { $$ = valor_int(TIPO_CHAR, $1); }
-    | NUM_REAL              { $$ = valor_real(TIPO_DOUBLE, $1); }
-    | ID                    { POSICAO(@1); $$ = ler_variavel($1); free($1); }
-    | exp PLUS exp          { $$ = operacao($1, '+', $3); }
-    | exp MINUS exp         { $$ = operacao($1, '-', $3); }
-    | exp TIMES exp         { $$ = operacao($1, '*', $3); }
-    | exp DIV exp           { POSICAO(@3); /* posição do divisor */
-                              $$ = operacao($1, '/', $3); }
-    | MINUS exp %prec UMINUS { $$ = operacao(valor_int(TIPO_INT, 0), '-', $2); }
-    | LPAREN exp RPAREN     { $$ = $2; }
+    NUM                     { $$ = ast_criar_numero_int(TIPO_INT, $1, @1.first_line, @1.first_column); }
+    | NUM_LONG              { $$ = ast_criar_numero_int(TIPO_LONG, $1, @1.first_line, @1.first_column); }
+    | CARACTERE             { $$ = ast_criar_numero_int(TIPO_CHAR, $1, @1.first_line, @1.first_column); }
+    | NUM_REAL              { $$ = ast_criar_numero_real(TIPO_DOUBLE, $1, @1.first_line, @1.first_column); }
+    | ID                    { 
+                                checar_variavel($1, @1); 
+                                $$ = ast_criar_identificador($1, @1.first_line, @1.first_column); 
+                                free($1); 
+                            }
+    | exp PLUS exp          { $$ = ast_criar_operacao(AST_SOMA, $1, $3, @2.first_line, @2.first_column); }
+    | exp MINUS exp         { $$ = ast_criar_operacao(AST_SUBTRACAO, $1, $3, @2.first_line, @2.first_column); }
+    | exp TIMES exp         { $$ = ast_criar_operacao(AST_MULTIPLICACAO, $1, $3, @2.first_line, @2.first_column); }
+    | exp DIV exp           { 
+                                /* Manter checagem provisória de divisão por literal 0 (Issue #28) */
+                                if ($3 && $3->tipo == AST_NUMERO) {
+                                    if (($3->tipo_c == TIPO_FLOAT || $3->tipo_c == TIPO_DOUBLE) && $3->valor.r == 0.0) {
+                                        POSICAO(@3); erro_semantico("Divisão por zero!");
+                                    } else if (($3->tipo_c == TIPO_CHAR || $3->tipo_c == TIPO_INT || $3->tipo_c == TIPO_LONG) && $3->valor.i == 0) {
+                                        POSICAO(@3); erro_semantico("Divisão por zero!");
+                                    }
+                                }
+                                $$ = ast_criar_operacao(AST_DIVISAO, $1, $3, @2.first_line, @2.first_column); 
+                            }
+    | MINUS exp %prec UMINUS { $$ = ast_criar_menos_unario($2, @1.first_line, @1.first_column); }
+    | LPAREN exp RPAREN     { $$ = $2; /* Repassa subárvore conforme a issue exige */ }
     ;
 
 %%
 
-/* ---------- Funções auxiliares de expressões ---------- */
-
-static Valor valor_int(int tipo, long v) {
-    Valor x = { tipo, v, 0.0, 1 };
-    return x;
-}
-
-static Valor valor_real(int tipo, double v) {
-    Valor x = { tipo, 0, v, 1 };
-    return x;
-}
-
-static Valor valor_invalido(void) {
-    Valor x = { TIPO_INT, 0, 0.0, 0 };
-    return x;
-}
-
-/* Converte um valor para outro tipo, com as mesmas regras de truncamento do C. */
-static Valor converter(Valor v, int tipo) {
-    if (!v.ok) return v;
-    if (tipo_eh_real(tipo)) {
-        double r = tipo_eh_real(v.tipo) ? v.r : (double)v.i;
-        if (tipo == TIPO_FLOAT) r = (float)r;
-        return valor_real(tipo, r);
-    } else {
-        long i = tipo_eh_real(v.tipo) ? (long)v.r : v.i;
-        if (tipo == TIPO_CHAR)     i = (char)i;
-        else if (tipo == TIPO_INT) i = (int)i;
-        return valor_int(tipo, i);
-    }
-}
-
-/* Operação binária com promoção de tipos:
- * o resultado tem o tipo "mais largo" dos dois operandos, e no mínimo int
- * (char + char -> int, igual ao C). Divisão entre inteiros é inteira. */
-static Valor operacao(Valor a, char op, Valor b) {
-    if (!a.ok || !b.ok) return valor_invalido();
-
-    int tipo = a.tipo > b.tipo ? a.tipo : b.tipo;
-    if (tipo < TIPO_INT) tipo = TIPO_INT;
-
-    a = converter(a, tipo);
-    b = converter(b, tipo);
-
-    if (tipo_eh_real(tipo)) {
-        double r = 0.0;
-        switch (op) {
-            case '+': r = a.r + b.r; break;
-            case '-': r = a.r - b.r; break;
-            case '*': r = a.r * b.r; break;
-            case '/':
-                if (b.r == 0.0) { erro_semantico("Divisão por zero!"); return valor_invalido(); }
-                r = a.r / b.r;
-                break;
-        }
-        return converter(valor_real(TIPO_DOUBLE, r), tipo);
-    } else {
-        long i = 0;
-        switch (op) {
-            case '+': i = a.i + b.i; break;
-            case '-': i = a.i - b.i; break;
-            case '*': i = a.i * b.i; break;
-            case '/':
-                if (b.i == 0) { erro_semantico("Divisão por zero!"); return valor_invalido(); }
-                i = a.i / b.i;
-                break;
-        }
-        return converter(valor_int(TIPO_LONG, i), tipo);
-    }
-}
+/* ---------- Funções auxiliares (Checagens provisórias) ---------- */
 
 /* Declaração de variável: registra na tabela com a posição do nome.
  * Retorna NULL se for redeclaração (o erro já foi reportado pela tabela). */
@@ -240,38 +189,13 @@ static Simbolo *declarar(char *nome, int tipo, YYLTYPE loc) {
                           loc.first_line, loc.first_column);
 }
 
-/* Uso de variável: precisa ter sido declarada antes. */
-static Valor ler_variavel(char *nome) {
+/* Uso e Atribuição de variável: checa se foi declarada.
+ * Substitui as antigas ler_variavel e atribuir, pois o cálculo migrará para semântica. */
+static void checar_variavel(char *nome, YYLTYPE loc) {
     Simbolo *s = tabela_buscar(nome, escopo_atual);
     if (s == NULL) {
+        definir_posicao(loc.first_line, loc.first_column);
         erro_semantico("Variável '%s' não declarada", nome);
-        return valor_invalido();
-    }
-    return tipo_eh_real(s->tipo) ? valor_real(s->tipo, s->valor_real)
-                                 : valor_int(s->tipo, s->valor_int);
-}
-
-/* Atribuição: a variável precisa existir; o valor é convertido para o tipo dela. */
-static void atribuir(char *nome, Valor v) {
-    Simbolo *s = tabela_buscar(nome, escopo_atual);
-    if (s == NULL) {
-        erro_semantico("Variável '%s' não declarada", nome);
-        return;
-    }
-    if (!v.ok) return;
-    v = converter(v, s->tipo);
-    s->valor_int = v.i;
-    s->valor_real = v.r;
-}
-
-/* Imprime o resultado de uma instrução-expressão. */
-static void imprimir(Valor v) {
-    if (!v.ok) return;
-    switch (v.tipo) {
-        case TIPO_CHAR:   printf("%c\n", (char)v.i); break;
-        case TIPO_FLOAT:
-        case TIPO_DOUBLE: printf("%g\n", v.r); break;
-        default:          printf("%ld\n", v.i); break;
     }
 }
 
@@ -368,13 +292,15 @@ int main(int argc, char **argv) {
        e mensagens de erro (stderr) quando os testes usam 2>&1 */
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    /* Uso: ./parser [--tabela] [arquivo]
-       --tabela imprime a tabela de símbolos ao final da análise */
+    /* Uso: ./parser [--tabela] [--ast] [arquivo] */
     int mostrar_tabela = 0;
+    int mostrar_ast = 0;
     const char *arquivo = NULL;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--tabela") == 0 || strcmp(argv[i], "-t") == 0)
             mostrar_tabela = 1;
+        else if (strcmp(argv[i], "--ast") == 0)
+            mostrar_ast = 1;
         else
             arquivo = argv[i];
     }
@@ -396,11 +322,20 @@ int main(int argc, char **argv) {
 
     if (f) fclose(f);
 
+    /* Imprime a AST se o argumento --ast foi passado (Exigência da Issue #28) */
+    if (mostrar_ast && ast_raiz_programa != NULL) {
+        ast_imprimir(ast_raiz_programa, 0);
+    }
+
     if (mostrar_tabela) {
         printf("\n--- Tabela de Símbolos ---\n");
         tabela_imprimir(stdout);
     }
+    
     tabela_liberar();
+    
+    /* Libera toda a árvore sintática gerada antes do encerramento */
+    ast_liberar(ast_raiz_programa);
 
     /* O programa é rejeitado se houve qualquer erro léxico, sintático ou semântico */
     if (resultado != 0 || erros_lexicos > 0 || erros_sintaticos > 0 || erros_semanticos > 0) {
