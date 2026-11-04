@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "tabela.h"
+#include "semantica.h"
 
 /* Protótipos das funções necessárias para o Bison */
 int yylex(void);
@@ -18,13 +19,6 @@ int erro_na_instrucao = 0;
 int erros_lexicos = 0;          /* incrementado pelo scanner.l */
 static int erros_sintaticos = 0;
 
-/* Posição usada nas mensagens de erro semântico (ver tabela.h) */
-#define POSICAO(loc) definir_posicao((loc).first_line, (loc).first_column)
-
-/* Escopo atual. Por enquanto só existe o global; quando houver blocos
-   e funções, o parser passa a incrementar/decrementar este valor. */
-static int escopo_atual = ESCOPO_GLOBAL;
-
 /* Variável global que guardará a raiz da AST ao final do parsing */
 struct NoAST *ast_raiz_programa = NULL;
 %}
@@ -32,12 +26,6 @@ struct NoAST *ast_raiz_programa = NULL;
 /* INJEÇÃO NO HEADER: Garante que parser.tab.h conheça ast.h antes do %union */
 %code requires {
     #include "ast.h"
-}
-
-/* Protótipos auxiliares emitidos depois das definições (substitui lógica de Valor) */
-%code {
-static Simbolo *declarar(char *nome, int tipo, YYLTYPE loc);
-static void checar_variavel(char *nome, YYLTYPE loc);
 }
 
 /* Define a estrutura yylval que compartilha dados entre Flex e Bison */
@@ -113,7 +101,6 @@ instrucao:
         $$ = $1;
     }
     | ID ASSIGN exp SEMICOLON {
-        checar_variavel($1, @1);
         $$ = ast_criar_atribuicao($1, $3, @1.first_line, @1.first_column);
         free($1);
     }
@@ -129,13 +116,10 @@ instrucao:
 
 declaracao:
     tipo ID SEMICOLON {
-        declarar($2, (int)$1, @2);
         $$ = ast_criar_declaracao((int)$1, $2, NULL, @2.first_line, @2.first_column);
         free($2);
     }
     | tipo ID ASSIGN exp SEMICOLON {
-        /* Mantendo o aviso provisório de redeclaração na tabela */
-        declarar($2, (int)$1, @2); 
         $$ = ast_criar_declaracao((int)$1, $2, $4, @2.first_line, @2.first_column);
         free($2);
     }
@@ -155,49 +139,18 @@ exp:
     | CARACTERE             { $$ = ast_criar_numero_int(TIPO_CHAR, $1, @1.first_line, @1.first_column); }
     | NUM_REAL              { $$ = ast_criar_numero_real(TIPO_DOUBLE, $1, @1.first_line, @1.first_column); }
     | ID                    { 
-                                checar_variavel($1, @1); 
                                 $$ = ast_criar_identificador($1, @1.first_line, @1.first_column); 
                                 free($1); 
                             }
     | exp PLUS exp          { $$ = ast_criar_operacao(AST_SOMA, $1, $3, @2.first_line, @2.first_column); }
     | exp MINUS exp         { $$ = ast_criar_operacao(AST_SUBTRACAO, $1, $3, @2.first_line, @2.first_column); }
     | exp TIMES exp         { $$ = ast_criar_operacao(AST_MULTIPLICACAO, $1, $3, @2.first_line, @2.first_column); }
-    | exp DIV exp           { 
-                                /* Manter checagem provisória de divisão por literal 0 (Issue #28) */
-                                if ($3 && $3->tipo == AST_NUMERO) {
-                                    if (($3->tipo_c == TIPO_FLOAT || $3->tipo_c == TIPO_DOUBLE) && $3->valor.r == 0.0) {
-                                        POSICAO(@3); erro_semantico("Divisão por zero!");
-                                    } else if (($3->tipo_c == TIPO_CHAR || $3->tipo_c == TIPO_INT || $3->tipo_c == TIPO_LONG) && $3->valor.i == 0) {
-                                        POSICAO(@3); erro_semantico("Divisão por zero!");
-                                    }
-                                }
-                                $$ = ast_criar_operacao(AST_DIVISAO, $1, $3, @2.first_line, @2.first_column); 
-                            }
+    | exp DIV exp           { $$ = ast_criar_operacao(AST_DIVISAO, $1, $3, @2.first_line, @2.first_column); }
     | MINUS exp %prec UMINUS { $$ = ast_criar_menos_unario($2, @1.first_line, @1.first_column); }
     | LPAREN exp RPAREN     { $$ = $2; /* Repassa subárvore conforme a issue exige */ }
     ;
 
 %%
-
-/* ---------- Funções auxiliares (Checagens provisórias) ---------- */
-
-/* Declaração de variável: registra na tabela com a posição do nome.
- * Retorna NULL se for redeclaração (o erro já foi reportado pela tabela). */
-static Simbolo *declarar(char *nome, int tipo, YYLTYPE loc) {
-    definir_posicao(loc.first_line, loc.first_column);
-    return tabela_inserir(nome, CAT_VARIAVEL, (Tipo)tipo, escopo_atual,
-                          loc.first_line, loc.first_column);
-}
-
-/* Uso e Atribuição de variável: checa se foi declarada.
- * Substitui as antigas ler_variavel e atribuir, pois o cálculo migrará para semântica. */
-static void checar_variavel(char *nome, YYLTYPE loc) {
-    Simbolo *s = tabela_buscar(nome, escopo_atual);
-    if (s == NULL) {
-        definir_posicao(loc.first_line, loc.first_column);
-        erro_semantico("Variável '%s' não declarada", nome);
-    }
-}
 
 /* ---------- Mensagens de erro sintático ---------- */
 
@@ -321,6 +274,12 @@ int main(int argc, char **argv) {
     int resultado = yyparse();
 
     if (f) fclose(f);
+
+    /* Análise semântica: só roda se o programa estiver correto léxica e
+     * sintaticamente; senão a AST está incompleta e geraria erros falsos. */
+    if (resultado == 0 && erros_lexicos == 0 && erros_sintaticos == 0) {
+        semantica_analisar(ast_raiz_programa);
+    }
 
     /* Imprime a AST se o argumento --ast foi passado (Exigência da Issue #28) */
     if (mostrar_ast && ast_raiz_programa != NULL) {

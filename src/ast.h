@@ -50,6 +50,9 @@ typedef struct NoAST
     TipoNoAST tipo;        /* categoria do nó */
     int tipo_c;            /* um dos TIPO_* de tabela.h, ou TIPO_INEXISTENTE
                               enquanto a análise semântica não anotar o nó */
+    Simbolo *simbolo;      /* símbolo resolvido pela análise semântica
+                              (identificador, atribuição, declaração); NULL até lá.
+                              Pertence à tabela: ast_liberar não o libera */
     char *texto;           /* nome de variável (cópia própria) */
     ValorAST valor;        /* só para AST_NUMERO */
     int linha;

@@ -1,0 +1,3 @@
+Erro Semântico [Linha 2, Col 5]: Variável 'a' já foi declarada na linha 1
+Erro Semântico [Linha 3, Col 1]: Variável 'b' não declarada
+Erro Semântico [Linha 3, Col 9]: Variável 'c' não declarada
