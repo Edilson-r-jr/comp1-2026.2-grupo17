@@ -1,0 +1,2 @@
+Erro Semântico [Linha 1, Col 1]: Variável 'y' não declarada
+Erro Semântico [Linha 2, Col 14]: Divisão por zero!

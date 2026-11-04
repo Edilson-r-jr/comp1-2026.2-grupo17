@@ -1,0 +1,1 @@
+Erro Semântico [Linha 1, Col 1]: Variável 'a' não declarada
