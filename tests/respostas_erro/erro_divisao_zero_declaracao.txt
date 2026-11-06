@@ -1,0 +1,1 @@
+Erro Semântico [Linha 1, Col 14]: Divisão por zero!

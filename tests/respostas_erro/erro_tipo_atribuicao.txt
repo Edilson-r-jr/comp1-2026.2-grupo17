@@ -1,0 +1,1 @@
+Erro Semântico [Linha 3, Col 1]: atribuição de 'double' para 'int' não permitida em 'a'

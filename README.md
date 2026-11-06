@@ -107,6 +107,26 @@ A tabela a seguir lista os recursos que não farão parte do projeto e o motivo 
 | Biblioteca padrão além de `printf`/`scanf` (`math.h`, `stdlib.h`, arquivos)                         | Está fora do objetivo do trabalho.                                                                     |
 | `argc`/`argv`, threads, sinais                                                                      | Dependem do sistema operacional.                                                                       |
 
+## Regras de tipos
+
+A análise semântica calcula o tipo de cada expressão de baixo para cima, seguindo o C. A ordem dos tipos, do mais estreito ao mais largo, é `char < int < long < float < double`.
+
+| Construção                  | Tipo resultante                                                |
+| --------------------------- | -------------------------------------------------------------- |
+| Literal inteiro / `long` / caractere | `int` / `long` / `char`                               |
+| Literal real (`1.5`, `2e3`) | `double`, como no C                                            |
+| Identificador               | o tipo declarado da variável                                   |
+| `a + b`, `a - b`, `a * b`, `a / b` | o mais largo entre `a` e `b`, no mínimo `int` (`char + char` → `int`) |
+| `-a`                        | o tipo de `a`, no mínimo `int`                                 |
+
+Em atribuições (`x = e;`) e declarações com inicialização (`tipo x = e;`):
+
+- Promoções são aceitas (ex.: `int → float`, `char → int`).
+- Estreitamentos entre inteiros (`long → int`) e entre reais (`double → float`) também são aceitos, como no C.
+- Só **real → inteiro** é erro: `Erro Semântico [Linha X, Col Y]: atribuição de 'double' para 'int' não permitida em 'a'`.
+
+Uma expressão com erro (variável não declarada, divisão por literal zero) recebe o tipo `TIPO_ERRO`, que se propaga para as expressões que a contêm sem gerar novas mensagens. Assim, `a = x + 1;` com `x` não declarado gera um único erro.
+
 
 ## Integrantes
  

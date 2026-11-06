@@ -14,7 +14,30 @@
  * blocos e funções, a análise passa a entrar e sair de escopos aqui. */
 static int escopo_atual = ESCOPO_GLOBAL;
 
-static void analisar_expressao(NoAST *no);
+static int analisar_expressao(NoAST *no);
+
+/* Tipo do resultado de uma operação aritmética: o mais largo dos
+ * operandos, no mínimo int (char + char -> int, como no C). */
+static int tipo_promovido(int a, int b)
+{
+    int t = a > b ? a : b;
+    return t < TIPO_INT ? TIPO_INT : t;
+}
+
+/* Atribuição e declaração inicializada: promoções e estreitamentos entre
+ * inteiros ou entre reais são aceitos, como no C; só real -> inteiro é erro.
+ * Se algum lado já tem erro, nada é reportado (evita erro em cascata). */
+static void verificar_atribuicao(const NoAST *no, int destino, int origem)
+{
+    if (destino == TIPO_ERRO || origem == TIPO_ERRO)
+        return;
+    if (tipo_eh_real(origem) && !tipo_eh_real(destino))
+    {
+        definir_posicao(no->linha, no->coluna);
+        erro_semantico("atribuição de '%s' para '%s' não permitida em '%s'",
+                       nome_tipo(origem), nome_tipo(destino), no->texto);
+    }
+}
 
 /* Divisão cujo divisor é o literal 0 ou 0.0 (ex.: "x / 0").
  * Divisores calculados (ex.: "x / y") só são conhecidos ao executar. */
@@ -28,7 +51,8 @@ static int eh_literal_zero(const NoAST *no)
 }
 
 /* Resolve um nome usado no programa (identificador ou lado esquerdo de uma
- * atribuição). Se achar, anota no nó o símbolo e o tipo dele. */
+ * atribuição). Se achar, anota no nó o símbolo e o tipo dele; senão, o nó
+ * fica com TIPO_ERRO. */
 static void resolver_nome(NoAST *no)
 {
     Simbolo *s = tabela_buscar(no->texto, escopo_atual);
@@ -36,17 +60,19 @@ static void resolver_nome(NoAST *no)
     {
         definir_posicao(no->linha, no->coluna);
         erro_semantico("Variável '%s' não declarada", no->texto);
+        no->tipo_c = TIPO_ERRO;
         return;
     }
     no->simbolo = s;
     no->tipo_c = s->tipo;
 }
 
-/* Visita uma expressão inteira (os filhos antes do pai). */
-static void analisar_expressao(NoAST *no)
+/* Visita uma expressão inteira (os filhos antes do pai), anota o tipo de
+ * cada nó em no->tipo_c e devolve o tipo da expressão. */
+static int analisar_expressao(NoAST *no)
 {
     if (no == NULL)
-        return;
+        return TIPO_ERRO;
 
     switch (no->tipo)
     {
@@ -55,35 +81,43 @@ static void analisar_expressao(NoAST *no)
         break;
 
     case AST_NUMERO:
-        /* literal: nada a resolver (o tipo já vem do parser) */
+        /* literal: o tipo já vem do parser (real é double) */
         break;
 
     case AST_SOMA:
     case AST_SUBTRACAO:
     case AST_MULTIPLICACAO:
-        analisar_expressao(no->esq);
-        analisar_expressao(no->dir);
-        break;
-
     case AST_DIVISAO:
-        analisar_expressao(no->esq);
-        analisar_expressao(no->dir);
-        if (eh_literal_zero(no->dir))
+    {
+        int esq = analisar_expressao(no->esq);
+        int dir = analisar_expressao(no->dir);
+        if (esq == TIPO_ERRO || dir == TIPO_ERRO)
+            no->tipo_c = TIPO_ERRO; /* erro já reportado no filho */
+        else if (no->tipo == AST_DIVISAO && eh_literal_zero(no->dir))
         {
             /* aponta para o divisor, como a mensagem antiga do parser */
             definir_posicao(no->dir->linha, no->dir->coluna);
             erro_semantico("Divisão por zero!");
+            no->tipo_c = TIPO_ERRO;
         }
+        else
+            no->tipo_c = tipo_promovido(esq, dir);
         break;
+    }
 
     case AST_MENOS_UNARIO:
-        analisar_expressao(no->esq);
+    {
+        int t = analisar_expressao(no->esq);
+        no->tipo_c = (t == TIPO_ERRO) ? TIPO_ERRO : tipo_promovido(t, t);
         break;
+    }
 
     default:
         /* instruções nunca aparecem dentro de uma expressão */
+        no->tipo_c = TIPO_ERRO;
         break;
     }
+    return no->tipo_c;
 }
 
 /* Visita uma instrução do programa. */
@@ -94,7 +128,8 @@ static void analisar_instrucao(NoAST *no)
     case AST_DECLARACAO:
         /* A inicialização é analisada ANTES de inserir o nome: assim, em
          * "int x = x + 1;" o 'x' da direita ainda não existe e gera erro. */
-        analisar_expressao(no->esq);
+        if (no->esq)
+            verificar_atribuicao(no, no->tipo_c, analisar_expressao(no->esq));
 
         /* tabela_inserir já reporta a redeclaração e devolve NULL */
         definir_posicao(no->linha, no->coluna);
@@ -104,7 +139,7 @@ static void analisar_instrucao(NoAST *no)
 
     case AST_ATRIBUICAO:
         resolver_nome(no);
-        analisar_expressao(no->esq);
+        verificar_atribuicao(no, no->tipo_c, analisar_expressao(no->esq));
         break;
 
     case AST_EXPRESSAO:
