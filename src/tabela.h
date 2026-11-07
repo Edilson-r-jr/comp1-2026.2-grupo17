@@ -20,7 +20,9 @@
  * A ordem importa: quanto maior o valor, mais "largo" é o tipo.
  * Isso é usado na promoção de tipos em expressões mistas
  * (ex.: long + double -> double), como no C.
- * TIPO_VOID fica no final porque nunca participa de expressões. */
+ * TIPO_VOID fica no final porque nunca participa de expressões.
+ * TIPO_ERRO marca uma expressão que já teve erro semântico; ele se
+ * propaga para o nó pai sem gerar novas mensagens. */
 typedef enum
 {
     TIPO_CHAR = 0,
@@ -28,7 +30,8 @@ typedef enum
     TIPO_LONG,
     TIPO_FLOAT,
     TIPO_DOUBLE,
-    TIPO_VOID
+    TIPO_VOID,
+    TIPO_ERRO
 } Tipo;
 
 /* Tipo ainda não definido (ex.: nó da AST antes da análise semântica) */

@@ -10,7 +10,8 @@
  *   - redeclaração no mesmo escopo;
  *   - uso de variável não declarada (inclusive uso antes da declaração);
  *   - divisão por um literal zero.
- * A verificação de tipos fica para a próxima issue.
+ * Issue #30: cada expressão recebe seu tipo em no->tipo_c e atribuições
+ * de real para inteiro são rejeitadas (regras no README).
  */
 #ifndef SEMANTICA_H
 #define SEMANTICA_H

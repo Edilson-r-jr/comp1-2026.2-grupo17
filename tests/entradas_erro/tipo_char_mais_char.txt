@@ -1,0 +1,2 @@
+char c = 65;
+int i = c + c;
