@@ -1,7 +1,10 @@
 #include <stdio.h>
-#include "../src/token.tab.h"
+#include "../src/parser.tab.h"
 
 YYSTYPE yylval;
+YYLTYPE yylloc;
+int erro_na_instrucao = 0;
+int erros_lexicos = 0;
 
 extern int yylex(void);
 extern char *yytext;

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "tabela.h"
 #include "semantica.h"
+#include "execucao.h"
 
 /* Protótipos das funções necessárias para o Bison */
 int yylex(void);
@@ -59,7 +60,7 @@ struct NoAST *ast_raiz_programa = NULL;
 %token SEMICOLON   /* fim de instrução */
 
 /* Declara os tipos não-terminais que agora retornam nós da AST */
-%type <no>       exp instrucao declaracao programa
+%type <no>       exp instrucao declaracao programa lista_instrucoes bloco
 %type <intValue> tipo
 
 /* Libera o nome do ID se ele for descartado durante a recuperação de erro */
@@ -72,30 +73,36 @@ struct NoAST *ast_raiz_programa = NULL;
  * com ponteiros inválidos, além de dar double free no main. */
 %destructor { } programa
 
-/* Precedência de operadores (de baixo para cima = maior precedência) */
+/* Precedência dos operadores: menor para maior */
+%nonassoc EQ NEQ LT LE GT GE
 %left PLUS MINUS
 %left TIMES DIV
 %precedence UMINUS
 
+
 %%
 
-/* Um programa é uma sequência (possivelmente vazia) de instruções,
- * cada uma terminada por ';'. Quebras de linha não têm significado. */
+/* Um programa é uma sequência de instruções. */
 programa:
-    %empty { 
-        $$ = NULL; 
-        ast_raiz_programa = ast_criar_programa(NULL); /* Inicia a raiz do programa vazia */
+    lista_instrucoes {
+        $$ = $1;
+        ast_raiz_programa = ast_criar_programa($$);
     }
-    | programa instrucao {
+    ;
+
+lista_instrucoes:
+    %empty {
+        $$ = NULL;
+    }
+    | lista_instrucoes instrucao {
         $$ = ast_anexar($1, $2);
-        ast_raiz_programa->esq = $$; /* Encadeia a instrução na raiz global */
         erro_na_instrucao = 0;
     }
     ;
 
 instrucao:
     SEMICOLON {
-        $$ = NULL; /* instrução vazia */
+        $$ = NULL;
     }
     | declaracao {
         $$ = $1;
@@ -107,10 +114,24 @@ instrucao:
     | exp SEMICOLON {
         $$ = ast_criar_expressao($1, @1.first_line, @1.first_column);
     }
+    | bloco {
+        $$ = $1;
+    }
+    | IF LPAREN exp RPAREN bloco{
+        $$ = ast_criar_if($3, $5, NULL, @1.first_line, @1.first_column);
+    }
+    | IF LPAREN exp RPAREN bloco ELSE bloco {
+        $$ = ast_criar_if($3, $5, $7, @1.first_line, @1.first_column);
+    }
     | error SEMICOLON {
-        /* Recuperação de erro sintático: descarta até o próximo ';' e retorna NULL para a AST ignorar */
-        $$ = NULL; 
+        $$ = NULL;
         yyerrok;
+    }
+    ;
+
+bloco:
+    LBRACE lista_instrucoes RBRACE {
+        $$ = ast_criar_bloco($2);
     }
     ;
 
@@ -134,20 +155,58 @@ tipo:
     ;
 
 exp:
-    NUM                     { $$ = ast_criar_numero_int(TIPO_INT, $1, @1.first_line, @1.first_column); }
-    | NUM_LONG              { $$ = ast_criar_numero_int(TIPO_LONG, $1, @1.first_line, @1.first_column); }
-    | CARACTERE             { $$ = ast_criar_numero_int(TIPO_CHAR, $1, @1.first_line, @1.first_column); }
-    | NUM_REAL              { $$ = ast_criar_numero_real(TIPO_DOUBLE, $1, @1.first_line, @1.first_column); }
-    | ID                    { 
-                                $$ = ast_criar_identificador($1, @1.first_line, @1.first_column); 
-                                free($1); 
-                            }
-    | exp PLUS exp          { $$ = ast_criar_operacao(AST_SOMA, $1, $3, @2.first_line, @2.first_column); }
-    | exp MINUS exp         { $$ = ast_criar_operacao(AST_SUBTRACAO, $1, $3, @2.first_line, @2.first_column); }
-    | exp TIMES exp         { $$ = ast_criar_operacao(AST_MULTIPLICACAO, $1, $3, @2.first_line, @2.first_column); }
-    | exp DIV exp           { $$ = ast_criar_operacao(AST_DIVISAO, $1, $3, @2.first_line, @2.first_column); }
-    | MINUS exp %prec UMINUS { $$ = ast_criar_menos_unario($2, @1.first_line, @1.first_column); }
-    | LPAREN exp RPAREN     { $$ = $2; /* Repassa subárvore conforme a issue exige */ }
+    NUM {
+        $$ = ast_criar_numero_int(TIPO_INT, $1, @1.first_line, @1.first_column);
+    }
+    | NUM_LONG {
+        $$ = ast_criar_numero_int(TIPO_LONG, $1, @1.first_line, @1.first_column);
+    }
+    | CARACTERE {
+        $$ = ast_criar_numero_int(TIPO_CHAR, $1, @1.first_line, @1.first_column);
+    }
+    | NUM_REAL {
+        $$ = ast_criar_numero_real(TIPO_DOUBLE, $1, @1.first_line, @1.first_column);
+    }
+    | ID {
+        $$ = ast_criar_identificador($1, @1.first_line, @1.first_column);
+        free($1);
+    }
+    | exp PLUS exp {
+        $$ = ast_criar_operacao(AST_SOMA, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp MINUS exp {
+        $$ = ast_criar_operacao(AST_SUBTRACAO, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp TIMES exp {
+        $$ = ast_criar_operacao(AST_MULTIPLICACAO, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp DIV exp {
+        $$ = ast_criar_operacao(AST_DIVISAO, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp EQ exp {
+        $$ = ast_criar_operacao(AST_IGUAL, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp NEQ exp {
+        $$ = ast_criar_operacao(AST_DIFERENTE, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp LT exp {
+        $$ = ast_criar_operacao(AST_MENOR, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp LE exp {
+        $$ = ast_criar_operacao(AST_MENOR_IGUAL, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp GT exp {
+        $$ = ast_criar_operacao(AST_MAIOR, $1, $3, @2.first_line, @2.first_column);
+    }
+    | exp GE exp {
+        $$ = ast_criar_operacao(AST_MAIOR_IGUAL, $1, $3, @2.first_line, @2.first_column);
+    }
+    | MINUS exp %prec UMINUS {
+        $$ = ast_criar_menos_unario($2, @1.first_line, @1.first_column);
+    }
+    | LPAREN exp RPAREN {
+        $$ = $2;
+    }
     ;
 
 %%
@@ -272,14 +331,21 @@ int main(int argc, char **argv) {
     }
 
     int resultado = yyparse();
+    int erro_execucao = 0;
 
     if (f) fclose(f);
 
     /* Análise semântica: só roda se o programa estiver correto léxica e
      * sintaticamente; senão a AST está incompleta e geraria erros falsos. */
     if (resultado == 0 && erros_lexicos == 0 && erros_sintaticos == 0) {
-        semantica_analisar(ast_raiz_programa);
-    }
+    semantica_analisar(ast_raiz_programa);
+
+    if (erros_semanticos == 0 && !mostrar_ast && !mostrar_tabela) {
+    if (!execucao_executar(ast_raiz_programa)) {
+    erro_execucao = 1;
+}
+}
+}
 
     /* Imprime a AST se o argumento --ast foi passado (Exigência da Issue #28) */
     if (mostrar_ast && ast_raiz_programa != NULL) {
@@ -297,7 +363,7 @@ int main(int argc, char **argv) {
     ast_liberar(ast_raiz_programa);
 
     /* O programa é rejeitado se houve qualquer erro léxico, sintático ou semântico */
-    if (resultado != 0 || erros_lexicos > 0 || erros_sintaticos > 0 || erros_semanticos > 0) {
+    if (resultado != 0 || erros_lexicos > 0 || erros_sintaticos > 0 || erros_semanticos > 0 || erro_execucao) {
         return 1;
     }
     return 0;

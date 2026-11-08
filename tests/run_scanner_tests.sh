@@ -4,10 +4,9 @@ gcc -Isrc tests/test_scanner.c src/lex.yy.c -o tests/test_scanner
 
 resultado=$(./tests/test_scanner tests/entradas_scanner/controle_condicional.txt)
 
-esperado="token=267 texto=if
-token=268 texto=else
-token=266 texto=ifelse_var
-token=265 texto="
+esperado="token=263 texto=if
+token=264 texto=else
+token=262 texto=ifelse_var"
 
 if [ "$resultado" = "$esperado" ]; then
     echo "Teste do scanner: OK"
