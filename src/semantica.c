@@ -1,35 +1,37 @@
 /* FGA0003 - Compiladores 1
- * semantica.c - Análise semântica sobre a AST
+ * semantica.c - Análise semântica sobre a AST (ver semantica.h)
  *
- * Percorre o programa na ordem das instruções, verificando declarações,
- * tipos, usos de variáveis, expressões, blocos e condicionais.
+ * O programa é percorrido UMA vez, na ordem em que as instruções aparecem.
+ * Isso garante a regra do C de "declarar antes de usar": quando um uso é
+ * visitado, só as declarações anteriores já estão na tabela.
+ * (Duas passagens completas — primeiro todas as declarações, depois todos
+ * os usos — aceitariam "a = 5; int a;" sem erro.)
  */
-
 #include "semantica.h"
 #include "tabela.h"
 
-/* Escopo atualmente analisado. */
+/* Escopo atual. Começa no global; cada bloco { } abre um escopo filho
+ * (ver analisar_bloco) e, ao terminar, volta para o anterior. */
 static int escopo_atual = ESCOPO_GLOBAL;
 
 static int analisar_expressao(NoAST *no);
 static void analisar_instrucao(NoAST *no);
 
-/* Tipo do resultado de uma operação aritmética.
- * O resultado é o tipo mais largo dos operandos, no mínimo int. */
+/* Tipo do resultado de uma operação aritmética: o mais largo dos
+ * operandos, no mínimo int (char + char -> int, como no C). */
 static int tipo_promovido(int a, int b)
 {
     int t = a > b ? a : b;
     return t < TIPO_INT ? TIPO_INT : t;
 }
 
-/* Verifica atribuições e inicializações.
- * Conversões de real para inteiro não são permitidas.
- * Erros anteriores não geram mensagens em cascata. */
+/* Atribuição e declaração inicializada: promoções e estreitamentos entre
+ * inteiros ou entre reais são aceitos, como no C; só real -> inteiro é erro.
+ * Se algum lado já tem erro, nada é reportado (evita erro em cascata). */
 static void verificar_atribuicao(const NoAST *no, int destino, int origem)
 {
     if (destino == TIPO_ERRO || origem == TIPO_ERRO)
         return;
-
     if (tipo_eh_real(origem) && !tipo_eh_real(destino))
     {
         definir_posicao(no->linha, no->coluna);
@@ -38,23 +40,23 @@ static void verificar_atribuicao(const NoAST *no, int destino, int origem)
     }
 }
 
-/* Verifica se o nó representa um literal numérico igual a zero. */
+/* Divisão cujo divisor é o literal 0 ou 0.0 (ex.: "x / 0").
+ * Divisores calculados (ex.: "x / y") só são conhecidos ao executar. */
 static int eh_literal_zero(const NoAST *no)
 {
     if (no == NULL || no->tipo != AST_NUMERO)
         return 0;
-
     if (tipo_eh_real(no->tipo_c))
         return no->valor.r == 0.0;
-
     return no->valor.i == 0;
 }
 
-/* Resolve um identificador e registra seu símbolo e tipo no nó. */
+/* Resolve um nome usado no programa (identificador ou lado esquerdo de uma
+ * atribuição). Se achar, anota no nó o símbolo e o tipo dele; senão, o nó
+ * fica com TIPO_ERRO. */
 static void resolver_nome(NoAST *no)
 {
     Simbolo *s = tabela_buscar(no->texto, escopo_atual);
-
     if (s == NULL)
     {
         definir_posicao(no->linha, no->coluna);
@@ -62,12 +64,12 @@ static void resolver_nome(NoAST *no)
         no->tipo_c = TIPO_ERRO;
         return;
     }
-
     no->simbolo = s;
     no->tipo_c = s->tipo;
 }
 
-/* Analisa uma expressão e devolve seu tipo. */
+/* Visita uma expressão inteira (os filhos antes do pai), anota o tipo de
+ * cada nó em no->tipo_c e devolve o tipo da expressão. */
 static int analisar_expressao(NoAST *no)
 {
     if (no == NULL)
@@ -80,7 +82,7 @@ static int analisar_expressao(NoAST *no)
         break;
 
     case AST_NUMERO:
-        /* O tipo do literal já foi definido pelo parser. */
+        /* literal: o tipo já vem do parser (real é double) */
         break;
 
     case AST_SOMA:
@@ -90,24 +92,22 @@ static int analisar_expressao(NoAST *no)
     {
         int esq = analisar_expressao(no->esq);
         int dir = analisar_expressao(no->dir);
-
         if (esq == TIPO_ERRO || dir == TIPO_ERRO)
-        {
-            no->tipo_c = TIPO_ERRO;
-        }
+            no->tipo_c = TIPO_ERRO; /* erro já reportado no filho */
         else if (no->tipo == AST_DIVISAO && eh_literal_zero(no->dir))
         {
+            /* aponta para o divisor, como a mensagem antiga do parser */
             definir_posicao(no->dir->linha, no->dir->coluna);
             erro_semantico("Divisão por zero!");
             no->tipo_c = TIPO_ERRO;
         }
         else
-        {
             no->tipo_c = tipo_promovido(esq, dir);
-        }
         break;
     }
 
+    /* Comparações: os operandos podem ser de qualquer tipo numérico e o
+     * resultado é int (1 = verdadeiro, 0 = falso), como no C. */
     case AST_IGUAL:
     case AST_DIFERENTE:
     case AST_MENOR:
@@ -117,56 +117,41 @@ static int analisar_expressao(NoAST *no)
     {
         int esq = analisar_expressao(no->esq);
         int dir = analisar_expressao(no->dir);
-
-        if (esq == TIPO_ERRO || dir == TIPO_ERRO)
-            no->tipo_c = TIPO_ERRO;
-        else
-            no->tipo_c = TIPO_INT;
-
+        no->tipo_c = (esq == TIPO_ERRO || dir == TIPO_ERRO) ? TIPO_ERRO : TIPO_INT;
         break;
     }
 
     case AST_MENOS_UNARIO:
     {
-        int tipo = analisar_expressao(no->esq);
-
-        if (tipo == TIPO_ERRO)
-            no->tipo_c = TIPO_ERRO;
-        else
-            no->tipo_c = tipo_promovido(tipo, tipo);
-
+        int t = analisar_expressao(no->esq);
+        no->tipo_c = (t == TIPO_ERRO) ? TIPO_ERRO : tipo_promovido(t, t);
         break;
     }
 
     default:
+        /* instruções nunca aparecem dentro de uma expressão */
         no->tipo_c = TIPO_ERRO;
         break;
     }
-
     return no->tipo_c;
 }
 
-/* Analisa todas as instruções de um bloco em um novo escopo. */
+/* Bloco { ... }: as declarações feitas dentro dele valem só até o '}'.
+ * Um nome declarado aqui pode "esconder" outro de fora sem ser redeclaração
+ * (tabela_inserir só compara com o mesmo escopo), e tabela_buscar procura
+ * do escopo atual para os de fora até o global. */
 static void analisar_bloco(NoAST *bloco)
 {
-    if (bloco == NULL)
-        return;
-
     int escopo_anterior = escopo_atual;
-
     escopo_atual = tabela_criar_escopo(escopo_anterior);
 
-    for (NoAST *instrucao = bloco->esq;
-         instrucao != NULL;
-         instrucao = instrucao->proximo)
-    {
-        analisar_instrucao(instrucao);
-    }
+    for (NoAST *no = bloco->esq; no != NULL; no = no->proximo)
+        analisar_instrucao(no);
 
     escopo_atual = escopo_anterior;
 }
 
-/* Analisa uma instrução individual. */
+/* Visita uma instrução do programa. */
 static void analisar_instrucao(NoAST *no)
 {
     if (no == NULL)
@@ -175,32 +160,21 @@ static void analisar_instrucao(NoAST *no)
     switch (no->tipo)
     {
     case AST_DECLARACAO:
-        /* Analisa a inicialização antes de inserir o identificador. */
-        if (no->esq != NULL)
-        {
-            int origem = analisar_expressao(no->esq);
-            verificar_atribuicao(no, no->tipo_c, origem);
-        }
+        /* A inicialização é analisada ANTES de inserir o nome: assim, em
+         * "int x = x + 1;" o 'x' da direita ainda não existe e gera erro. */
+        if (no->esq)
+            verificar_atribuicao(no, no->tipo_c, analisar_expressao(no->esq));
 
+        /* tabela_inserir já reporta a redeclaração e devolve NULL */
         definir_posicao(no->linha, no->coluna);
-
-        no->simbolo = tabela_inserir(
-            no->texto,
-            CAT_VARIAVEL,
-            (Tipo)no->tipo_c,
-            escopo_atual,
-            no->linha,
-            no->coluna
-        );
+        no->simbolo = tabela_inserir(no->texto, CAT_VARIAVEL, (Tipo)no->tipo_c,
+                                     escopo_atual, no->linha, no->coluna);
         break;
 
     case AST_ATRIBUICAO:
-    {
         resolver_nome(no);
-        int origem = analisar_expressao(no->esq);
-        verificar_atribuicao(no, no->tipo_c, origem);
+        verificar_atribuicao(no, no->tipo_c, analisar_expressao(no->esq));
         break;
-    }
 
     case AST_EXPRESSAO:
         analisar_expressao(no->esq);
@@ -211,10 +185,10 @@ static void analisar_instrucao(NoAST *no)
         break;
 
     case AST_IF:
-        /* A condição também precisa ter identificadores válidos. */
+        /* A condição é uma expressão comum (como no C, qualquer valor
+         * diferente de zero é verdadeiro). Os dois caminhos são analisados,
+         * porque um erro no else é erro mesmo que ele nunca execute. */
         analisar_expressao(no->esq);
-
-        /* Analisa os dois caminhos, independentemente da execução. */
         analisar_instrucao(no->dir);
         analisar_instrucao(no->terceiro);
         break;
@@ -224,21 +198,16 @@ static void analisar_instrucao(NoAST *no)
     }
 }
 
-/* Analisa o programa inteiro na ordem das instruções. */
 int semantica_analisar(NoAST *raiz)
 {
     if (raiz == NULL)
         return 0;
 
-    escopo_atual = ESCOPO_GLOBAL;
     int erros_antes = erros_semanticos;
 
-    for (NoAST *no = raiz->esq;
-         no != NULL;
-         no = no->proximo)
-    {
+    /* raiz é AST_PROGRAMA; as instruções ficam em esq, ligadas por 'proximo' */
+    for (NoAST *no = raiz->esq; no != NULL; no = no->proximo)
         analisar_instrucao(no);
-    }
 
     return erros_semanticos - erros_antes;
 }

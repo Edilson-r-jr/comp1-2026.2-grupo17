@@ -1,12 +1,14 @@
 #!/bin/bash
 
+cd "$(dirname "$0")/.." || exit 1
+
 gcc -Isrc tests/test_scanner.c src/lex.yy.c -o tests/test_scanner
 
 resultado=$(./tests/test_scanner tests/entradas_scanner/controle_condicional.txt)
 
-esperado="token=263 texto=if
-token=264 texto=else
-token=262 texto=ifelse_var"
+esperado="IF if
+ELSE else
+ID ifelse_var"
 
 if [ "$resultado" = "$esperado" ]; then
     echo "Teste do scanner: OK"

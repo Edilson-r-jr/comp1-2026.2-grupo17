@@ -1,0 +1,5 @@
+if (y > 0) {
+    int z = 1;
+} else {
+    int w = 2.5;
+}

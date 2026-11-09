@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include "tabela.h"
 #include "semantica.h"
-#include "execucao.h"
 
 /* Protótipos das funções necessárias para o Bison */
 int yylex(void);
@@ -73,16 +72,19 @@ struct NoAST *ast_raiz_programa = NULL;
  * com ponteiros inválidos, além de dar double free no main. */
 %destructor { } programa
 
-/* Precedência dos operadores: menor para maior */
+/* Precedência de operadores (de baixo para cima = maior precedência).
+ * Comparações ficam abaixo da aritmética: "a + 1 > b" é "(a + 1) > b".
+ * %nonassoc proíbe encadear comparações ("a < b < c" é erro de sintaxe). */
 %nonassoc EQ NEQ LT LE GT GE
 %left PLUS MINUS
 %left TIMES DIV
 %precedence UMINUS
 
-
 %%
 
-/* Um programa é uma sequência de instruções. */
+/* Um programa é uma sequência (possivelmente vazia) de instruções,
+ * cada uma terminada por ';'. Quebras de linha não têm significado.
+ * A mesma lista_instrucoes é reaproveitada dentro dos blocos { }. */
 programa:
     lista_instrucoes {
         $$ = $1;
@@ -102,7 +104,7 @@ lista_instrucoes:
 
 instrucao:
     SEMICOLON {
-        $$ = NULL;
+        $$ = NULL; /* instrução vazia */
     }
     | declaracao {
         $$ = $1;
@@ -117,21 +119,26 @@ instrucao:
     | bloco {
         $$ = $1;
     }
-    | IF LPAREN exp RPAREN bloco{
+    /* Os dois corpos exigem chaves, o que evita a ambiguidade do
+     * "else pendurado" (dangling else) sem precisar de %prec. */
+    | IF LPAREN exp RPAREN bloco {
         $$ = ast_criar_if($3, $5, NULL, @1.first_line, @1.first_column);
     }
     | IF LPAREN exp RPAREN bloco ELSE bloco {
         $$ = ast_criar_if($3, $5, $7, @1.first_line, @1.first_column);
     }
     | error SEMICOLON {
+        /* Recuperação de erro sintático: descarta até o próximo ';' e
+         * retorna NULL para a AST ignorar a instrução */
         $$ = NULL;
         yyerrok;
     }
     ;
 
+/* Bloco { ... }: abre um escopo novo na análise semântica */
 bloco:
     LBRACE lista_instrucoes RBRACE {
-        $$ = ast_criar_bloco($2);
+        $$ = ast_criar_bloco($2, @1.first_line, @1.first_column);
     }
     ;
 
@@ -205,7 +212,7 @@ exp:
         $$ = ast_criar_menos_unario($2, @1.first_line, @1.first_column);
     }
     | LPAREN exp RPAREN {
-        $$ = $2;
+        $$ = $2; /* parênteses só agrupam: a forma da árvore já guarda a ordem */
     }
     ;
 
@@ -331,21 +338,14 @@ int main(int argc, char **argv) {
     }
 
     int resultado = yyparse();
-    int erro_execucao = 0;
 
     if (f) fclose(f);
 
     /* Análise semântica: só roda se o programa estiver correto léxica e
      * sintaticamente; senão a AST está incompleta e geraria erros falsos. */
     if (resultado == 0 && erros_lexicos == 0 && erros_sintaticos == 0) {
-    semantica_analisar(ast_raiz_programa);
-
-    if (erros_semanticos == 0 && !mostrar_ast && !mostrar_tabela) {
-    if (!execucao_executar(ast_raiz_programa)) {
-    erro_execucao = 1;
-}
-}
-}
+        semantica_analisar(ast_raiz_programa);
+    }
 
     /* Imprime a AST se o argumento --ast foi passado (Exigência da Issue #28) */
     if (mostrar_ast && ast_raiz_programa != NULL) {
@@ -363,7 +363,7 @@ int main(int argc, char **argv) {
     ast_liberar(ast_raiz_programa);
 
     /* O programa é rejeitado se houve qualquer erro léxico, sintático ou semântico */
-    if (resultado != 0 || erros_lexicos > 0 || erros_sintaticos > 0 || erros_semanticos > 0 || erro_execucao) {
+    if (resultado != 0 || erros_lexicos > 0 || erros_sintaticos > 0 || erros_semanticos > 0) {
         return 1;
     }
     return 0;

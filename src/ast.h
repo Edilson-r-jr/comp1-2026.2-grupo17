@@ -17,30 +17,40 @@
 
 typedef enum
 {
-    AST_PROGRAMA,
-    AST_DECLARACAO,
-    AST_ATRIBUICAO,
-    AST_EXPRESSAO,
-    AST_BLOCO,
-    AST_IF,
+    /* Estrutura */
+    AST_PROGRAMA,      /* esq = primeira instrução (lista via 'proximo') */
+    AST_DECLARACAO,    /* texto = nome, tipo_c = tipo declarado, esq = inicialização (ou NULL) */
+    AST_ATRIBUICAO,    /* texto = nome da variável, esq = expressão */
+    AST_EXPRESSAO,     /* instrução-expressão (ex.: "x * 3;"), esq = expressão */
+    AST_BLOCO,         /* { ... }: esq = primeira instrução (lista via 'proximo');
+                          abre um escopo novo na análise semântica */
+    AST_IF,            /* esq = condição, dir = bloco do if,
+                          terceiro = bloco do else (ou NULL) */
 
-    AST_NUMERO,
-    AST_IDENTIFICADOR,
+    /* Folhas */
+    AST_NUMERO,        /* literal; tipo_c diz se o valor está em .i ou .r */
+    AST_IDENTIFICADOR, /* uso de variável, texto = nome */
 
+    /* Operações */
     AST_SOMA,
     AST_SUBTRACAO,
     AST_MULTIPLICACAO,
     AST_DIVISAO,
-    AST_MENOS_UNARIO,
+    AST_MENOS_UNARIO,  /* esq = operando */
 
-    AST_IGUAL,
-    AST_DIFERENTE,
-    AST_MENOR,
-    AST_MENOR_IGUAL,
-    AST_MAIOR,
-    AST_MAIOR_IGUAL
+    /* Comparações (esq OP dir); resultado int: 1 verdadeiro, 0 falso, como no C */
+    AST_IGUAL,         /* == */
+    AST_DIFERENTE,     /* != */
+    AST_MENOR,         /* <  */
+    AST_MENOR_IGUAL,   /* <= */
+    AST_MAIOR,         /* >  */
+    AST_MAIOR_IGUAL    /* >= */
 } TipoNoAST;
 
+/* Valor de um literal. O campo válido depende de tipo_c:
+ * char/int/long usam .i, float/double usam .r.
+ * Guardar inteiros como long (e não double) preserva a diferença entre
+ * 5 e 5.0, que muda o resultado da divisão em C, e a precisão de long. */
 typedef union
 {
     long i;
@@ -49,34 +59,46 @@ typedef union
 
 typedef struct NoAST
 {
-    TipoNoAST tipo;
-    int tipo_c;
-    Simbolo *simbolo;
-    char *texto;
-    ValorAST valor;
+    TipoNoAST tipo;        /* categoria do nó */
+    int tipo_c;            /* um dos TIPO_* de tabela.h, ou TIPO_INEXISTENTE
+                              enquanto a análise semântica não anotar o nó */
+    Simbolo *simbolo;      /* símbolo resolvido pela análise semântica
+                              (identificador, atribuição, declaração); NULL até lá.
+                              Pertence à tabela: ast_liberar não o libera */
+    char *texto;           /* nome de variável (cópia própria) */
+    ValorAST valor;        /* só para AST_NUMERO */
     int linha;
     int coluna;
-
-    struct NoAST *esq;
-    struct NoAST *dir;
-    struct NoAST *terceiro;
-    struct NoAST *proximo;
+    struct NoAST *esq;     /* filho esquerdo / único filho */
+    struct NoAST *dir;     /* filho direito */
+    struct NoAST *terceiro; /* terceiro filho (só AST_IF: bloco do else) */
+    struct NoAST *proximo; /* próxima instrução da mesma lista */
 } NoAST;
 
+/* Literais */
 NoAST *ast_criar_numero_int(int tipo_c, long valor, int linha, int coluna);
 NoAST *ast_criar_numero_real(int tipo_c, double valor, int linha, int coluna);
+
+/* Expressões */
 NoAST *ast_criar_identificador(const char *nome, int linha, int coluna);
 NoAST *ast_criar_operacao(TipoNoAST tipo, NoAST *esq, NoAST *dir, int linha, int coluna);
 NoAST *ast_criar_menos_unario(NoAST *operando, int linha, int coluna);
-NoAST *ast_criar_declaracao(int tipo_c, const char *nome, NoAST *inicializacao, int linha, int coluna);
+
+/* Instruções */
+NoAST *ast_criar_declaracao(int tipo_c, const char *nome, NoAST *inicializacao,
+                            int linha, int coluna);
 NoAST *ast_criar_atribuicao(const char *nome, NoAST *expressao, int linha, int coluna);
 NoAST *ast_criar_expressao(NoAST *expressao, int linha, int coluna);
-NoAST *ast_criar_bloco(NoAST *instrucoes);
-NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao, int linha, int coluna);
+NoAST *ast_criar_bloco(NoAST *instrucoes, int linha, int coluna);
+NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao,
+                    int linha, int coluna);
 NoAST *ast_criar_programa(NoAST *instrucoes);
+
+/* Coloca 'no' no fim da lista iniciada em 'lista' e devolve o início.
+ * Pensado para a regra  programa: programa instrucao  do Bison. */
 NoAST *ast_anexar(NoAST *lista, NoAST *no);
 
 void ast_imprimir(const NoAST *raiz, int nivel);
 void ast_liberar(NoAST *raiz);
 
-#endif
+#endif /* AST_H */
