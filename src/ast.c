@@ -102,6 +102,25 @@ NoAST *ast_criar_expressao(NoAST *expressao, int linha, int coluna)
     return no;
 }
 
+/* Bloco { ... }: a posição é a do '{', usada em mensagens futuras. */
+NoAST *ast_criar_bloco(NoAST *instrucoes, int linha, int coluna)
+{
+    NoAST *no = criar_no_base(AST_BLOCO, linha, coluna);
+    no->esq = instrucoes;
+    return no;
+}
+
+/* if (condicao) bloco_entao [else bloco_senao]; bloco_senao pode ser NULL. */
+NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao,
+                    int linha, int coluna)
+{
+    NoAST *no = criar_no_base(AST_IF, linha, coluna);
+    no->esq = condicao;
+    no->dir = bloco_entao;
+    no->terceiro = bloco_senao;
+    return no;
+}
+
 NoAST *ast_criar_programa(NoAST *instrucoes)
 {
     NoAST *no = criar_no_base(AST_PROGRAMA, 1, 1);
@@ -130,6 +149,8 @@ static const char *nome_no(TipoNoAST tipo)
     case AST_DECLARACAO:    return "AST_DECLARACAO";
     case AST_ATRIBUICAO:    return "AST_ATRIBUICAO";
     case AST_EXPRESSAO:     return "AST_EXPRESSAO";
+    case AST_BLOCO:         return "AST_BLOCO";
+    case AST_IF:            return "AST_IF";
     case AST_NUMERO:        return "AST_NUMERO";
     case AST_IDENTIFICADOR: return "AST_IDENTIFICADOR";
     case AST_SOMA:          return "AST_SOMA";
@@ -137,6 +158,12 @@ static const char *nome_no(TipoNoAST tipo)
     case AST_MULTIPLICACAO: return "AST_MULTIPLICACAO";
     case AST_DIVISAO:       return "AST_DIVISAO";
     case AST_MENOS_UNARIO:  return "AST_MENOS_UNARIO";
+    case AST_IGUAL:         return "AST_IGUAL";
+    case AST_DIFERENTE:     return "AST_DIFERENTE";
+    case AST_MENOR:         return "AST_MENOR";
+    case AST_MENOR_IGUAL:   return "AST_MENOR_IGUAL";
+    case AST_MAIOR:         return "AST_MAIOR";
+    case AST_MAIOR_IGUAL:   return "AST_MAIOR_IGUAL";
     default:                return "AST_DESCONHECIDO";
     }
 }
@@ -205,6 +232,7 @@ void ast_imprimir(const NoAST *raiz, int nivel)
 
         ast_imprimir(no->esq, nivel + 1);
         ast_imprimir(no->dir, nivel + 1);
+        ast_imprimir(no->terceiro, nivel + 1); /* else do AST_IF */
     }
 }
 
@@ -217,6 +245,7 @@ void ast_liberar(NoAST *raiz)
         NoAST *proximo = raiz->proximo;
         ast_liberar(raiz->esq);
         ast_liberar(raiz->dir);
+        ast_liberar(raiz->terceiro);
         free(raiz->texto);
         free(raiz);
         raiz = proximo;

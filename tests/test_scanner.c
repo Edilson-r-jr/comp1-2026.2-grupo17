@@ -1,7 +1,10 @@
 #include <stdio.h>
-#include "../src/token.tab.h"
+#include "../src/parser.tab.h"
 
 YYSTYPE yylval;
+YYLTYPE yylloc;
+int erro_na_instrucao = 0;
+int erros_lexicos = 0;
 
 extern int yylex(void);
 extern char *yytext;
@@ -20,7 +23,16 @@ int main(int argc, char **argv) {
     }
 
     while ((token = yylex()) != 0) {
-        printf("token=%d texto=%s\n", token, yytext);
+        /* Nome simbólico (do parser.tab.h) em vez do número: o número muda
+         * sempre que um token novo é declarado no parser.y */
+        const char *nome;
+        switch (token) {
+            case IF:   nome = "IF"; break;
+            case ELSE: nome = "ELSE"; break;
+            case ID:   nome = "ID"; break;
+            default:   nome = "OUTRO"; break;
+        }
+        printf("%s %s\n", nome, yytext);
     }
 
     if (argc > 1) {

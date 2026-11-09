@@ -12,6 +12,8 @@
  *   - divisão por um literal zero.
  * Issue #30: cada expressão recebe seu tipo em no->tipo_c e atribuições
  * de real para inteiro são rejeitadas (regras no README).
+ * Issue #16: blocos { } abrem escopos aninhados e o if/else tem a condição
+ * e os dois caminhos analisados.
  */
 #ifndef SEMANTICA_H
 #define SEMANTICA_H

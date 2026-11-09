@@ -1,0 +1,21 @@
+AST_PROGRAMA
+  AST_DECLARACAO (int x)
+    AST_NUMERO (10)
+  AST_IF
+    AST_MAIOR
+      AST_IDENTIFICADOR (x)
+      AST_NUMERO (5)
+    AST_BLOCO
+      AST_IF
+        AST_MAIOR
+          AST_IDENTIFICADOR (x)
+          AST_NUMERO (8)
+        AST_BLOCO
+          AST_EXPRESSAO
+            AST_NUMERO (100)
+        AST_BLOCO
+          AST_EXPRESSAO
+            AST_NUMERO (200)
+    AST_BLOCO
+      AST_EXPRESSAO
+        AST_NUMERO (300)

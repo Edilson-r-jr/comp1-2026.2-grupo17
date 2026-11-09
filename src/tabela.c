@@ -14,6 +14,17 @@
 static Simbolo *inicio = NULL;
 static Simbolo *fim = NULL;
 
+/* Registro da hierarquia de escopos. */
+typedef struct Escopo
+{
+    int id;
+    int pai;
+    struct Escopo *prox;
+} Escopo;
+
+static Escopo *escopos = NULL;
+static int proximo_escopo = 1;
+
 int erros_semanticos = 0;
 static int pos_linha = 0;
 static int pos_coluna = 0;
@@ -79,6 +90,51 @@ int tipo_eh_real(int tipo)
     return tipo == TIPO_FLOAT || tipo == TIPO_DOUBLE;
 }
 
+/* Procura o registro de um escopo pelo seu identificador. */
+static Escopo *buscar_escopo(int id)
+{
+    for (Escopo *e = escopos; e != NULL; e = e->prox)
+    {
+        if (e->id == id)
+            return e;
+    }
+
+    return NULL;
+}
+
+/* Registra ou atualiza o escopo pai. */
+void tabela_definir_pai(int escopo, int escopo_pai)
+{
+    Escopo *e = buscar_escopo(escopo);
+
+    if (e == NULL)
+    {
+        e = malloc(sizeof(Escopo));
+
+        if (e == NULL)
+        {
+            perror("malloc");
+            exit(1);
+        }
+
+        e->id = escopo;
+        e->prox = escopos;
+        escopos = e;
+    }
+
+    e->pai = escopo_pai;
+}
+
+/* Cria um novo escopo filho e retorna seu identificador. */
+int tabela_criar_escopo(int escopo_pai)
+{
+    int novo_id = proximo_escopo++;
+
+    tabela_definir_pai(novo_id, escopo_pai);
+
+    return novo_id;
+}
+
 
 /* Busca só dentro de um escopo, sem cair para o global. */
 static Simbolo *buscar_no_escopo(const char *nome, int escopo)
@@ -95,12 +151,27 @@ static Simbolo *buscar_no_escopo(const char *nome, int escopo)
 
 Simbolo *tabela_buscar(const char *nome, int escopo)
 {
-    Simbolo *s = buscar_no_escopo(nome, escopo);
-    if (s == NULL && escopo != ESCOPO_GLOBAL)
+    int atual = escopo;
+
+    while (1)
     {
-        s = buscar_no_escopo(nome, ESCOPO_GLOBAL);
+        Simbolo *s = buscar_no_escopo(nome, atual);
+
+        if (s != NULL)
+            return s;
+
+        if (atual == ESCOPO_GLOBAL)
+            break;
+
+        Escopo *e = buscar_escopo(atual);
+
+        if (e == NULL)
+            atual = ESCOPO_GLOBAL;
+        else
+            atual = e->pai;
     }
-    return s;
+
+    return NULL;
 }
 
 Simbolo *tabela_inserir(const char *nome, Categoria categoria, Tipo tipo,
@@ -177,6 +248,7 @@ void tabela_imprimir(FILE *saida)
 void tabela_liberar(void)
 {
     Simbolo *s = inicio;
+
     while (s != NULL)
     {
         Simbolo *prox = s->prox;
@@ -184,6 +256,19 @@ void tabela_liberar(void)
         free(s);
         s = prox;
     }
+
     inicio = NULL;
     fim = NULL;
+
+    Escopo *e = escopos;
+
+    while (e != NULL)
+    {
+        Escopo *prox = e->prox;
+        free(e);
+        e = prox;
+    }
+
+    escopos = NULL;
+    proximo_escopo = 1;
 }

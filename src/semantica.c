@@ -10,11 +10,12 @@
 #include "semantica.h"
 #include "tabela.h"
 
-/* Escopo atual. Por enquanto só existe o global; quando a gramática tiver
- * blocos e funções, a análise passa a entrar e sair de escopos aqui. */
+/* Escopo atual. Começa no global; cada bloco { } abre um escopo filho
+ * (ver analisar_bloco) e, ao terminar, volta para o anterior. */
 static int escopo_atual = ESCOPO_GLOBAL;
 
 static int analisar_expressao(NoAST *no);
+static void analisar_instrucao(NoAST *no);
 
 /* Tipo do resultado de uma operação aritmética: o mais largo dos
  * operandos, no mínimo int (char + char -> int, como no C). */
@@ -105,6 +106,21 @@ static int analisar_expressao(NoAST *no)
         break;
     }
 
+    /* Comparações: os operandos podem ser de qualquer tipo numérico e o
+     * resultado é int (1 = verdadeiro, 0 = falso), como no C. */
+    case AST_IGUAL:
+    case AST_DIFERENTE:
+    case AST_MENOR:
+    case AST_MENOR_IGUAL:
+    case AST_MAIOR:
+    case AST_MAIOR_IGUAL:
+    {
+        int esq = analisar_expressao(no->esq);
+        int dir = analisar_expressao(no->dir);
+        no->tipo_c = (esq == TIPO_ERRO || dir == TIPO_ERRO) ? TIPO_ERRO : TIPO_INT;
+        break;
+    }
+
     case AST_MENOS_UNARIO:
     {
         int t = analisar_expressao(no->esq);
@@ -120,9 +136,27 @@ static int analisar_expressao(NoAST *no)
     return no->tipo_c;
 }
 
+/* Bloco { ... }: as declarações feitas dentro dele valem só até o '}'.
+ * Um nome declarado aqui pode "esconder" outro de fora sem ser redeclaração
+ * (tabela_inserir só compara com o mesmo escopo), e tabela_buscar procura
+ * do escopo atual para os de fora até o global. */
+static void analisar_bloco(NoAST *bloco)
+{
+    int escopo_anterior = escopo_atual;
+    escopo_atual = tabela_criar_escopo(escopo_anterior);
+
+    for (NoAST *no = bloco->esq; no != NULL; no = no->proximo)
+        analisar_instrucao(no);
+
+    escopo_atual = escopo_anterior;
+}
+
 /* Visita uma instrução do programa. */
 static void analisar_instrucao(NoAST *no)
 {
+    if (no == NULL)
+        return;
+
     switch (no->tipo)
     {
     case AST_DECLARACAO:
@@ -144,6 +178,19 @@ static void analisar_instrucao(NoAST *no)
 
     case AST_EXPRESSAO:
         analisar_expressao(no->esq);
+        break;
+
+    case AST_BLOCO:
+        analisar_bloco(no);
+        break;
+
+    case AST_IF:
+        /* A condição é uma expressão comum (como no C, qualquer valor
+         * diferente de zero é verdadeiro). Os dois caminhos são analisados,
+         * porque um erro no else é erro mesmo que ele nunca execute. */
+        analisar_expressao(no->esq);
+        analisar_instrucao(no->dir);
+        analisar_instrucao(no->terceiro);
         break;
 
     default:

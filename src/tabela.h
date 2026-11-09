@@ -48,6 +48,12 @@ typedef enum
 /* Escopo global. Escopos aninhados terão números maiores. */
 #define ESCOPO_GLOBAL 0
 
+/* Cria um novo escopo filho do escopo informado. */
+int tabela_criar_escopo(int escopo_pai);
+
+/* Define o escopo pai de um escopo existente. */
+void tabela_definir_pai(int escopo, int escopo_pai);
+
 /* Uma entrada da tabela. */
 typedef struct Simbolo
 {

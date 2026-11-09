@@ -22,6 +22,10 @@ typedef enum
     AST_DECLARACAO,    /* texto = nome, tipo_c = tipo declarado, esq = inicialização (ou NULL) */
     AST_ATRIBUICAO,    /* texto = nome da variável, esq = expressão */
     AST_EXPRESSAO,     /* instrução-expressão (ex.: "x * 3;"), esq = expressão */
+    AST_BLOCO,         /* { ... }: esq = primeira instrução (lista via 'proximo');
+                          abre um escopo novo na análise semântica */
+    AST_IF,            /* esq = condição, dir = bloco do if,
+                          terceiro = bloco do else (ou NULL) */
 
     /* Folhas */
     AST_NUMERO,        /* literal; tipo_c diz se o valor está em .i ou .r */
@@ -32,7 +36,15 @@ typedef enum
     AST_SUBTRACAO,
     AST_MULTIPLICACAO,
     AST_DIVISAO,
-    AST_MENOS_UNARIO   /* esq = operando */
+    AST_MENOS_UNARIO,  /* esq = operando */
+
+    /* Comparações (esq OP dir); resultado int: 1 verdadeiro, 0 falso, como no C */
+    AST_IGUAL,         /* == */
+    AST_DIFERENTE,     /* != */
+    AST_MENOR,         /* <  */
+    AST_MENOR_IGUAL,   /* <= */
+    AST_MAIOR,         /* >  */
+    AST_MAIOR_IGUAL    /* >= */
 } TipoNoAST;
 
 /* Valor de um literal. O campo válido depende de tipo_c:
@@ -59,6 +71,7 @@ typedef struct NoAST
     int coluna;
     struct NoAST *esq;     /* filho esquerdo / único filho */
     struct NoAST *dir;     /* filho direito */
+    struct NoAST *terceiro; /* terceiro filho (só AST_IF: bloco do else) */
     struct NoAST *proximo; /* próxima instrução da mesma lista */
 } NoAST;
 
@@ -76,6 +89,9 @@ NoAST *ast_criar_declaracao(int tipo_c, const char *nome, NoAST *inicializacao,
                             int linha, int coluna);
 NoAST *ast_criar_atribuicao(const char *nome, NoAST *expressao, int linha, int coluna);
 NoAST *ast_criar_expressao(NoAST *expressao, int linha, int coluna);
+NoAST *ast_criar_bloco(NoAST *instrucoes, int linha, int coluna);
+NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao,
+                    int linha, int coluna);
 NoAST *ast_criar_programa(NoAST *instrucoes);
 
 /* Coloca 'no' no fim da lista iniciada em 'lista' e devolve o início.
