@@ -143,6 +143,10 @@ EXPOENTE   [eE][+-]?{DIGITO}+
 ","     { return COMMA; }
 ";"     { return SEMICOLON; }   /* fim de instrução */
 
+    /* Ctrl+D digitado no console do Windows chega como o caractere 0x04
+     * (no Linux ele já é fim de arquivo). Tratamos como fim da entrada. */
+\x04    { return 0; }
+
 .       { ERRO_LEXICO("Caractere inesperado '%s'", yytext); }
 
 %%

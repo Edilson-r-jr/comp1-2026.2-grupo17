@@ -11,6 +11,15 @@ int yylex(void);
 void yyerror(const char *s);
 extern FILE *yyin;
 
+#ifdef _WIN32
+/* Console do Windows em UTF-8, para os acentos das mensagens saírem certos.
+ * O protótipo é declarado aqui em vez de incluir <windows.h>, que define
+ * macros (como VOID) que colidem com os nomes dos tokens do Bison. */
+__declspec(dllimport) int __stdcall SetConsoleOutputCP(unsigned int codepage);
+__declspec(dllimport) int __stdcall SetConsoleCP(unsigned int codepage);
+#define CODEPAGE_UTF8 65001
+#endif
+
 /* Marca que a instrução atual teve erro (léxico ou semântico) e, por isso,
    não deve imprimir resultado. Também é usada pelo scanner.l. */
 int erro_na_instrucao = 0;
@@ -311,6 +320,11 @@ int main(int argc, char **argv) {
        e mensagens de erro (stderr) quando os testes usam 2>&1 */
     setvbuf(stdout, NULL, _IONBF, 0);
 
+#ifdef _WIN32
+    SetConsoleOutputCP(CODEPAGE_UTF8);
+    SetConsoleCP(CODEPAGE_UTF8);
+#endif
+
     /* Uso: ./parser [--tabela] [--ast] [arquivo] */
     int mostrar_tabela = 0;
     int mostrar_ast = 0;
@@ -334,7 +348,11 @@ int main(int argc, char **argv) {
         yyin = f;
     } else if (isatty(STDIN_FILENO)) {
         printf("Modo interativo. Digite instruções terminadas em ';' (ex: int x = 2; x * 3;)\n");
+#ifdef _WIN32
+        printf("Ctrl+Z e Enter para sair.\n");
+#else
         printf("Ctrl+D para sair.\n");
+#endif
     }
 
     int resultado = yyparse();
