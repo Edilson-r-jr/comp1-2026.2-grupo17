@@ -359,20 +359,26 @@ int main(int argc, char **argv) {
 
     if (f) fclose(f);
 
-    /* Análise semântica: só roda se o programa estiver correto léxica e
-     * sintaticamente; senão a AST está incompleta e geraria erros falsos. */
+    /* Análise semântica: só roda se não houver erros léxicos ou sintáticos. */
     if (resultado == 0 && erros_lexicos == 0 && erros_sintaticos == 0) {
         semantica_analisar(ast_raiz_programa);
     }
 
-    /* Imprime a AST se o argumento --ast foi passado (Exigência da Issue #28) */
-    if (mostrar_ast && ast_raiz_programa != NULL) {
-        ast_imprimir(ast_raiz_programa, 0);
+    /* Resume todos os erros semânticos encontrados. */
+    if (erros_semanticos > 0) {
+        printf("%d erro(s) semântico(s) encontrado(s).\n", erros_semanticos);
     }
 
-    if (mostrar_tabela) {
-        printf("\n--- Tabela de Símbolos ---\n");
-        tabela_imprimir(stdout);
+    /* Fases posteriores só acontecem se não houver erros semânticos. */
+    if (erros_semanticos == 0) {
+        if (mostrar_ast && ast_raiz_programa != NULL) {
+            ast_imprimir(ast_raiz_programa, 0);
+        }
+
+        if (mostrar_tabela) {
+            printf("\n--- Tabela de Símbolos ---\n");
+            tabela_imprimir(stdout);
+        }
     }
     
     tabela_liberar();

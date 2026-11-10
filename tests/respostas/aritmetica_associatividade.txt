@@ -1,7 +1,7 @@
 AST_PROGRAMA
   AST_EXPRESSAO
-    AST_SUBTRACAO
-      AST_SUBTRACAO
-        AST_NUMERO (10)
-        AST_NUMERO (3)
-      AST_NUMERO (2)
+    AST_SUBTRACAO [int]
+      AST_SUBTRACAO [int]
+        AST_NUMERO (10) [int]
+        AST_NUMERO (3) [int]
+      AST_NUMERO (2) [int]

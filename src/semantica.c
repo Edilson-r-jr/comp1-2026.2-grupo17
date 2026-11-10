@@ -75,6 +75,8 @@ static int analisar_expressao(NoAST *no)
     if (no == NULL)
         return TIPO_ERRO;
 
+    no->analisado_semanticamente = 1;
+
     switch (no->tipo)
     {
     case AST_IDENTIFICADOR:
@@ -156,6 +158,8 @@ static void analisar_instrucao(NoAST *no)
 {
     if (no == NULL)
         return;
+
+    no->analisado_semanticamente = 1;
 
     switch (no->tipo)
     {

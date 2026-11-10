@@ -73,6 +73,7 @@ typedef struct NoAST
     struct NoAST *dir;     /* filho direito */
     struct NoAST *terceiro; /* terceiro filho (só AST_IF: bloco do else) */
     struct NoAST *proximo; /* próxima instrução da mesma lista */
+    int analisado_semanticamente;
 } NoAST;
 
 /* Literais */
