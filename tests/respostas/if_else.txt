@@ -1,13 +1,13 @@
 AST_PROGRAMA
-  AST_DECLARACAO (int x)
-    AST_NUMERO (3)
+  AST_DECLARACAO (int x) [int] [símbolo: x, linha 1]
+    AST_NUMERO (3) [int]
   AST_IF
-    AST_MAIOR
-      AST_IDENTIFICADOR (x)
-      AST_NUMERO (5)
+    AST_MAIOR [int]
+      AST_IDENTIFICADOR (x) [int] [símbolo: x, linha 1]
+      AST_NUMERO (5) [int]
     AST_BLOCO
       AST_EXPRESSAO
-        AST_NUMERO (100)
+        AST_NUMERO (100) [int]
     AST_BLOCO
       AST_EXPRESSAO
-        AST_NUMERO (200)
+        AST_NUMERO (200) [int]
