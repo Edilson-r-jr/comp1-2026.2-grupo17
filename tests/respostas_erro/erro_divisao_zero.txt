@@ -1,1 +1,2 @@
 Erro Semântico [Linha 2, Col 5]: Divisão por zero!
+1 erro(s) semântico(s) encontrado(s).

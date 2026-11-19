@@ -1,1 +1,2 @@
 Erro Semântico [Linha 1, Col 1]: Variável 'x' não declarada
+1 erro(s) semântico(s) encontrado(s).

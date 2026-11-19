@@ -359,26 +359,31 @@ int main(int argc, char **argv) {
 
     if (f) fclose(f);
 
-    /* Análise semântica: só roda se não houver erros léxicos ou sintáticos. */
+    /* Análise semântica: só roda se o programa estiver correto léxica e
+     * sintaticamente; senão a AST está incompleta e geraria erros falsos.
+     * Ela não para no primeiro erro: percorre o programa todo e acumula
+     * os diagnósticos em erros_semanticos. */
     if (resultado == 0 && erros_lexicos == 0 && erros_sintaticos == 0) {
         semantica_analisar(ast_raiz_programa);
     }
 
-    /* Resume todos os erros semânticos encontrados. */
+    /* Resumo dos erros semânticos (Issue #31). Vai para o stderr junto
+     * com as mensagens de erro, para não misturar com a saída do --ast. */
     if (erros_semanticos > 0) {
-        printf("%d erro(s) semântico(s) encontrado(s).\n", erros_semanticos);
+        fprintf(stderr, "%d erro(s) semântico(s) encontrado(s).\n",
+                erros_semanticos);
     }
 
-    /* Fases posteriores só acontecem se não houver erros semânticos. */
-    if (erros_semanticos == 0) {
-        if (mostrar_ast && ast_raiz_programa != NULL) {
-            ast_imprimir(ast_raiz_programa, 0);
-        }
+    /* Imprime a AST se o argumento --ast foi passado (Exigência da Issue #28).
+     * Continua imprimindo mesmo com erros semânticos: os nós com problema
+     * aparecem anotados como [erro], o que ajuda a localizar a falha. */
+    if (mostrar_ast && ast_raiz_programa != NULL) {
+        ast_imprimir(ast_raiz_programa, 0);
+    }
 
-        if (mostrar_tabela) {
-            printf("\n--- Tabela de Símbolos ---\n");
-            tabela_imprimir(stdout);
-        }
+    if (mostrar_tabela) {
+        printf("\n--- Tabela de Símbolos ---\n");
+        tabela_imprimir(stdout);
     }
     
     tabela_liberar();

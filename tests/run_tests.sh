@@ -100,21 +100,8 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES_ERRO"/*.txt; do
     "$EXECUTAVEL" < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
     STATUS=$?
 
-    # Compara stderr e verifica o resumo dos erros semânticos no stdout.
-    RESUMO_OK=0
-
-    if grep -q "^Erro Semântico" "$ARQUIVO_RESPOSTA"; then
-        QUANTIDADE_ERROS=$(grep -c "^Erro Semântico" "$ARQUIVO_RESPOSTA")
-        RESUMO_ESPERADO="$QUANTIDADE_ERROS erro(s) semântico(s) encontrado(s)."
-
-        if [ "$(cat "$RESULTADO")" = "$RESUMO_ESPERADO" ]; then
-            RESUMO_OK=1
-        fi
-    elif [ ! -s "$RESULTADO" ]; then
-        RESUMO_OK=1
-    fi
-
-    if diff -q "$ERROS" "$ARQUIVO_RESPOSTA" > /dev/null && [ "$RESUMO_OK" -eq 1 ]; then
+    # Aqui comparamos o STDERR com a resposta esperada
+    if diff -q "$ERROS" "$ARQUIVO_RESPOSTA" > /dev/null; then
         echo -e "${VERDE}[OK] '$NOME_TESTE' produziu o erro esperado.${RESET}\n"
         ((PASSOU++))
     else
