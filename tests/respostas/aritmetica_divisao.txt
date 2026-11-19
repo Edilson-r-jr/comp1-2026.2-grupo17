@@ -1,5 +1,5 @@
 AST_PROGRAMA
   AST_EXPRESSAO
-    AST_DIVISAO
-      AST_NUMERO (20)
-      AST_NUMERO (4)
+    AST_DIVISAO [int]
+      AST_NUMERO (20) [int]
+      AST_NUMERO (4) [int]

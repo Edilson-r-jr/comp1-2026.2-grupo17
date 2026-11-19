@@ -1,7 +1,7 @@
 AST_PROGRAMA
   AST_EXPRESSAO
-    AST_SOMA
-      AST_NUMERO (2)
-      AST_MULTIPLICACAO
-        AST_NUMERO (3)
-        AST_NUMERO (4)
+    AST_SOMA [int]
+      AST_NUMERO (2) [int]
+      AST_MULTIPLICACAO [int]
+        AST_NUMERO (3) [int]
+        AST_NUMERO (4) [int]

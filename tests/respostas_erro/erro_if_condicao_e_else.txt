@@ -1,2 +1,3 @@
 Erro Semântico [Linha 1, Col 5]: Variável 'y' não declarada
 Erro Semântico [Linha 4, Col 9]: atribuição de 'double' para 'int' não permitida em 'w'
+2 erro(s) semântico(s) encontrado(s).

@@ -65,6 +65,8 @@ const char *nome_tipo(int tipo)
         return "double";
     case TIPO_VOID:
         return "void";
+    case TIPO_ERRO: /* expressão com erro semântico (aparece no --ast) */
+        return "erro";
     default:
         return "desconhecido";
     }

@@ -228,6 +228,17 @@ void ast_imprimir(const NoAST *raiz, int nivel)
         default:
             break;
         }
+
+        /* Anota o tipo inferido pela análise semântica. */
+        if (no->analisado_semanticamente &&
+            no->tipo_c != TIPO_INEXISTENTE)
+            printf(" [%s]", nome_tipo(no->tipo_c));
+
+        /* Mostra o símbolo resolvido e sua linha de declaração. */
+        if (no->simbolo != NULL)
+            printf(" [símbolo: %s, linha %d]",
+                   no->simbolo->nome, no->simbolo->linha);
+
         printf("\n");
 
         ast_imprimir(no->esq, nivel + 1);
