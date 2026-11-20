@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "tabela.h"
 #include "semantica.h"
+#include "tac.h"
 
 /* Protótipos das funções necessárias para o Bison */
 int yylex(void);
@@ -325,15 +326,18 @@ int main(int argc, char **argv) {
     SetConsoleCP(CODEPAGE_UTF8);
 #endif
 
-    /* Uso: ./parser [--tabela] [--ast] [arquivo] */
+    /* Uso: ./parser [--tabela] [--ast] [--tac] [arquivo] */
     int mostrar_tabela = 0;
     int mostrar_ast = 0;
+    int mostrar_tac = 0;
     const char *arquivo = NULL;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--tabela") == 0 || strcmp(argv[i], "-t") == 0)
             mostrar_tabela = 1;
         else if (strcmp(argv[i], "--ast") == 0)
             mostrar_ast = 1;
+        else if (strcmp(argv[i], "--tac") == 0)
+            mostrar_tac = 1;
         else
             arquivo = argv[i];
     }
@@ -384,6 +388,13 @@ int main(int argc, char **argv) {
     if (mostrar_tabela) {
         printf("\n--- Tabela de Símbolos ---\n");
         tabela_imprimir(stdout);
+    }
+
+    /* Código intermediário (Issue #41): só para programas sem nenhum erro,
+     * porque uma AST com erro não representa um programa executável. */
+    if (mostrar_tac && resultado == 0 && erros_lexicos == 0 &&
+        erros_sintaticos == 0 && erros_semanticos == 0) {
+        tac_gerar(ast_raiz_programa, stdout);
     }
     
     tabela_liberar();

@@ -128,6 +128,38 @@ Em atribuições (`x = e;`) e declarações com inicialização (`tipo x = e;`):
 Uma expressão com erro (variável não declarada, divisão por literal zero) recebe o tipo `TIPO_ERRO`, que se propaga para as expressões que a contêm sem gerar novas mensagens. Assim, `a = x + 1;` com `x` não declarado gera um único erro.
 
 
+## Código intermediário (TAC)
+
+Com a opção `--tac`, o compilador gera o código de três endereços (TAC) do programa, depois da análise semântica. Cada instrução tem no máximo um operador; resultados intermediários ficam em temporárias `t0`, `t1`, ...
+
+```bash
+./parser --tac programa.c
+```
+
+Entrada:
+
+```c
+int a = 1; int b = 2; int c = 3; int y;
+y = (a + b) * (c - 2);
+```
+
+Saída:
+
+```text
+a = 1
+b = 2
+c = 3
+t0 = a + b
+t1 = c - 2
+t2 = t0 * t1
+y = t2
+```
+
+- A atribuição copia o resultado direto para a variável (`y = t2`), sem temporária extra.
+- Declaração sem inicialização (`int y;`) não gera instrução.
+- O TAC só é gerado se o programa não tiver erros léxicos, sintáticos ou semânticos.
+- Controle de fluxo (`if`/`else`, `while`) ainda não gera TAC (issues #42 e #44).
+
 ## Integrantes
  
 <table align="center">
