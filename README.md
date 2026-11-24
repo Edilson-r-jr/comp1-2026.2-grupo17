@@ -160,6 +160,14 @@ y = t2
 - O TAC só é gerado se o programa não tiver erros léxicos, sintáticos ou semânticos.
 - Controle de fluxo (`if`/`else`, `while`) ainda não gera TAC (issues #42 e #44).
 
+### Testes de geração de TAC
+
+Os casos de teste de código intermediário ficam em `tests/entradas_tac/` e suas saídas esperadas em `tests/respostas_tac/`. Para executar todos os testes do projeto (incluindo a bateria de TAC):
+
+```bash
+cd src
+make test
+
 ## Integrantes
  
 <table align="center">

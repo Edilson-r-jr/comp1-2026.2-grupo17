@@ -11,17 +11,20 @@ RESET='\033[0m'
 # Linux/WSL gera "parser"; Windows (MinGW) gera "parser.exe"
 EXECUTAVEL="../src/parser"
 [ -f "$EXECUTAVEL" ] || EXECUTAVEL="../src/parser.exe"
-RESULTADO="/tmp/resultado.txt"
-ERROS="/tmp/erros.txt"
+RESULTADO=".tmp_resultado_$$.txt"
+ERROS=".tmp_erros_$$.txt"
+trap 'rm -f "$RESULTADO" "$ERROS"' EXIT
 RELATORIO="relatorio.txt"
 
-# Pastas dos dois tipos de teste
+# Pastas dos tipos de teste
 DIR_TESTES="entradas"
 DIR_RESPOSTAS="respostas"
 DIR_TESTES_ERRO="entradas_erro"
 DIR_RESPOSTAS_ERRO="respostas_erro"
 DIR_TESTES_TABELA="entradas_tabela"
 DIR_RESPOSTAS_TABELA="respostas_tabela"
+DIR_TESTES_TAC="entradas_tac"
+DIR_RESPOSTAS_TAC="respostas_tac"
 
 echo -e "${AMARELO}==> Rodando bateria de testes...${RESET}\n"
 
@@ -43,7 +46,7 @@ FALHOU=0
 IGNORADOS=0
 FALHAS=()
 
-# ---------- Testes que devem PASSAR (compara stdout) ----------
+# ---------- Testes que devem PASSAR (compara stdout com --ast) ----------
 for ARQUIVO_ENTRADA in "$DIR_TESTES"/*.txt; do
     [ -e "$ARQUIVO_ENTRADA" ] || continue
 
@@ -56,7 +59,6 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES"/*.txt; do
     fi
 
     echo -e "${AMARELO}Rodando teste (saída): $NOME_TESTE${RESET}"
-    # ADICIONADA A FLAG --ast AQUI
     "$EXECUTAVEL" --ast < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
     STATUS=$?
 
@@ -100,7 +102,6 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES_ERRO"/*.txt; do
     "$EXECUTAVEL" < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
     STATUS=$?
 
-    # Aqui comparamos o STDERR com a resposta esperada
     if diff -q "$ERROS" "$ARQUIVO_RESPOSTA" > /dev/null; then
         echo -e "${VERDE}[OK] '$NOME_TESTE' produziu o erro esperado.${RESET}\n"
         ((PASSOU++))
@@ -156,6 +157,46 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES_TABELA"/*.txt; do
             echo "--- Entrada ---"; cat "$ARQUIVO_ENTRADA"; echo ""
             echo "--- Saída esperada ---"; cat "$ARQUIVO_RESPOSTA"; echo ""
             echo "--- Saída obtida ---"; cat "$RESULTADO"; echo ""
+            echo "--- Diferenças ---"; diff "$ARQUIVO_RESPOSTA" "$RESULTADO"; echo ""
+            echo "--- stderr ---"
+            [ -s "$ERROS" ] && cat "$ERROS" || echo "(vazio)"
+            echo ""
+        } >> "$RELATORIO"
+    fi
+    ((TOTAL++))
+done
+
+# ---------- Testes de geração de TAC (compara stdout com --tac) ----------
+for ARQUIVO_ENTRADA in "$DIR_TESTES_TAC"/*.txt; do
+    [ -e "$ARQUIVO_ENTRADA" ] || continue
+
+    NOME_TESTE=$(basename "$ARQUIVO_ENTRADA" .txt)
+    ARQUIVO_RESPOSTA="$DIR_RESPOSTAS_TAC/$NOME_TESTE.txt"
+
+    if [ ! -f "$ARQUIVO_RESPOSTA" ]; then
+        echo -e "${VERMELHO}[ERRO] Sem resposta de TAC para '$NOME_TESTE'.${RESET}"
+        ((IGNORADOS++)); continue
+    fi
+
+    echo -e "${AMARELO}Rodando teste (TAC): $NOME_TESTE${RESET}"
+    "$EXECUTAVEL" --tac < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
+    STATUS=$?
+
+    if diff -q "$RESULTADO" "$ARQUIVO_RESPOSTA" > /dev/null; then
+        echo -e "${VERDE}[OK] '$NOME_TESTE' passou.${RESET}\n"
+        ((PASSOU++))
+    else
+        echo -e "${VERMELHO}[FALHA] '$NOME_TESTE' não bateu com o TAC esperado.${RESET}\n"
+        FALHAS+=("$NOME_TESTE (TAC)")
+        ((FALHOU++))
+        {
+            echo "----------------------------------------"
+            echo "TESTE DE TAC FALHOU: $NOME_TESTE"
+            echo "Código de saída: $STATUS"
+            echo ""
+            echo "--- Entrada ---"; cat "$ARQUIVO_ENTRADA"; echo ""
+            echo "--- TAC esperado (stdout) ---"; cat "$ARQUIVO_RESPOSTA"; echo ""
+            echo "--- TAC obtido (stdout) ---"; cat "$RESULTADO"; echo ""
             echo "--- Diferenças ---"; diff "$ARQUIVO_RESPOSTA" "$RESULTADO"; echo ""
             echo "--- stderr ---"
             [ -s "$ERROS" ] && cat "$ERROS" || echo "(vazio)"

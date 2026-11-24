@@ -1,0 +1,4 @@
+int a;
+int b = 10;
+double c;
+double d = 2.5;

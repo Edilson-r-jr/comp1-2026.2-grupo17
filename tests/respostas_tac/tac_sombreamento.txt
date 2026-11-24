@@ -1,0 +1,10 @@
+x = 5
+y = 0
+t0 = x > 0
+ifFalse t0 goto L0
+x_1 = 15
+t1 = x_1 + 1
+y = t1
+L0:
+t2 = y + x
+y = t2

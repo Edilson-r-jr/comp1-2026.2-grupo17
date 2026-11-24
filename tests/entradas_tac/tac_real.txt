@@ -1,0 +1,4 @@
+double a = 1.5;
+double b = 2.5;
+double x;
+x = a + b * 2.0;

@@ -8,8 +8,9 @@ EXECUTAVEL="../src/parser"
 DIR_ENTRADAS="entradas_tac"
 DIR_RESPOSTAS="respostas_tac"
 
-RESULTADO="/tmp/resultado_tac.txt"
-ERROS="/tmp/erros_tac.txt"
+RESULTADO=".tmp_resultado_$$.txt"
+ERROS=".tmp_erros_$$.txt"
+trap 'rm -f "$RESULTADO" "$ERROS"' EXIT
 
 TOTAL=0
 PASSOU=0
