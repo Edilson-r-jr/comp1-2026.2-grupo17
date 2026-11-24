@@ -14,10 +14,10 @@ L3:
 t3 = a < 10
 ifFalse t3 goto L4
 t4 = a * 2
-d_3 = t4
-t5 = d_3 > 6
+d$3 = t4
+t5 = d$3 > 6
 ifFalse t5 goto L5
-x = d_3
+x = d$3
 goto L6
 L5:
 x = 0

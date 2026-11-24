@@ -120,22 +120,6 @@ static char *novo_rotulo(void)
     return strdup(buf);
 }
 
-/* Retorna o nome da variável considerando seu escopo semântico. */
-static char *nome_variavel(const NoAST *no)
-{
-    if (no->simbolo == NULL)
-        return strdup(no->texto);
-
-    if (no->simbolo->escopo == ESCOPO_GLOBAL)
-        return strdup(no->simbolo->nome);
-
-    char buf[128];
-    snprintf(buf, sizeof buf, "%s_%d",
-             no->simbolo->nome, no->simbolo->escopo);
-
-    return strdup(buf);
-}
-
 /* Texto de um literal. Inteiros (char/int/long) saem como número;
  * reais sempre com ponto, para 5.0 não virar o inteiro 5. */
 static char *texto_numero(const NoAST *no)
@@ -185,7 +169,7 @@ static char *gerar_expressao(const NoAST *no)
     if (no->tipo == AST_NUMERO)
         return texto_numero(no);
     if (no->tipo == AST_IDENTIFICADOR)
-        return nome_variavel(no);
+        return ast_nome_variavel(no);
 
     /* Menos unário: tN = - operando */
     if (no->tipo == AST_MENOS_UNARIO)
@@ -242,7 +226,7 @@ static void gerar_instrucao(const NoAST *no)
         /* Só a inicialização vira código; "int x;" não emite nada */
         if (no->esq != NULL)
         {
-            char *destino = nome_variavel(no);
+            char *destino = ast_nome_variavel(no);
             gerar_copia(destino, no->esq);
             free(destino);
         }
@@ -251,7 +235,7 @@ static void gerar_instrucao(const NoAST *no)
     case AST_ATRIBUICAO:
     {
         /* Usa o símbolo semântico para respeitar o escopo da variável. */
-        char *destino = nome_variavel(no);
+        char *destino = ast_nome_variavel(no);
         gerar_copia(destino, no->esq);
         free(destino);
         break;

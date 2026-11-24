@@ -102,6 +102,13 @@ NoAST *ast_criar_programa(NoAST *instrucoes);
  * Pensado para a regra  programa: programa instrucao  do Bison. */
 NoAST *ast_anexar(NoAST *lista, NoAST *no);
 
+/* Nome da variável no código gerado (TAC e JavaScript), considerando o
+ * escopo resolvido pela semântica: global -> "x"; escopo interno -> "x$N"
+ * (N = número do escopo). O '$' não existe em identificadores C, então o
+ * nome nunca colide com uma variável do usuário (ex.: "x_1"), e é válido
+ * em JavaScript. Devolve uma string alocada; quem chama libera. */
+char *ast_nome_variavel(const NoAST *no);
+
 void ast_imprimir(const NoAST *raiz, int nivel);
 void ast_liberar(NoAST *raiz);
 

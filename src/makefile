@@ -4,8 +4,8 @@ FLEX_FILE  = scanner.l
 BISON_C = parser.tab.c
 BISON_H = parser.tab.h
 FLEX_C  = lex.yy.c
-HEADERS = tabela.h ast.h semantica.h tac.h
-SOURCES = tabela.c ast.c semantica.c tac.c
+HEADERS = tabela.h ast.h semantica.h tac.h gerador_js.h
+SOURCES = tabela.c ast.c semantica.c tac.c gerador_js.c
 
 CC     = gcc
 # Adicionada a flag -g para facilitar o debug de memória com o valgrind
@@ -24,11 +24,9 @@ $(FLEX_C): $(FLEX_FILE) $(BISON_H)
 	flex $(FLEX_FILE)
 
 # Os scripts ficam em ../tests (o makefile roda dentro de src/)
+# run_all_tests.sh roda todas as baterias e mostra o total no fim
 test: $(EXEC)
-	../tests/run_tests.sh
-	../tests/run_ast_tests.sh
-	../tests/run_scanner_tests.sh
-	../tests/run_tac_tests.sh
+	../tests/run_all_tests.sh
 
 clean:
 	rm -f $(EXEC) $(BISON_C) $(BISON_H) $(FLEX_C)

@@ -198,6 +198,63 @@ Só a bateria de TAC:
 ./tests/run_tac_tests.sh
 ```
 
+## Geração de JavaScript
+
+Com a opção `--js`, o compilador traduz o programa para JavaScript, a linguagem-alvo do projeto. O código é gerado a partir da AST (já validada pela análise semântica), e não do TAC, porque o JavaScript não tem `goto`.
+
+```bash
+./parser --js programa.c > programa.js
+node programa.js
+```
+
+Entrada:
+
+```c
+int a = 7;
+int b = 2;
+int c = a / b;
+float f = 1.5;
+double d;
+d = f * 2;
+c = -a + b * 3;
+```
+
+Saída:
+
+```js
+"use strict";
+let a = 7;
+let b = 2;
+let c = ((a / b) | 0);
+let f = Math.fround(1.5);
+let d = 0;
+d = Math.fround(f * 2);
+c = (((-a | 0) + Math.imul(b, 3)) | 0);
+```
+
+O C tem vários tipos numéricos de tamanho fixo, e o JavaScript guarda todo número como um `double`. Para que o programa gerado calcule exatamente o mesmo que o programa em C, o gerador usa o tipo de cada expressão (anotado pela análise semântica):
+
+| Tipo do resultado | Operação         | JavaScript gerado         | Motivo                                             |
+| ----------------- | ---------------- | ------------------------- | -------------------------------------------------- |
+| `int`, `char`     | `a + b`, `a - b` | `((a + b) \| 0)`          | trunca para 32 bits, como o estouro do `int`       |
+| `int`, `char`     | `a * b`          | `Math.imul(a, b)`         | multiplicação exata em 32 bits                     |
+| `int`, `char`     | `a / b`          | `((a / b) \| 0)`          | divisão inteira (`7 / 2` é `3`, e não `3.5`)       |
+| `long`            | `a / b`          | `Math.trunc(a / b)`       | divisão inteira sem limitar a 32 bits              |
+| `float`           | qualquer         | `Math.fround(...)`        | arredonda para a precisão do `float`               |
+| `double`          | qualquer         | sem conversão             | já é o número do JavaScript                        |
+| `int`             | `a < b`, `a == b`| `(a < b ? 1 : 0)`         | no C a comparação vale `1` ou `0`, não `true`/`false` |
+
+Nas atribuições e declarações, o valor é convertido para o tipo da variável: `char` com `((v << 24) >> 24)`, `int` vindo de `long` com `(v | 0)` e `float` com `Math.fround(v)`.
+
+- Declaração sem inicialização (`int x;`) vira `let x = 0;`: no JavaScript a variável ficaria `undefined`.
+- Variáveis de escopos internos recebem o número do escopo no nome (`x$1`), no TAC e no JavaScript. O `$` não existe em identificadores C, então não há colisão com nomes do usuário.
+- `char` vira o código numérico do caractere (`'a'` → `97`).
+- O arquivo começa com `"use strict";`, que transforma em erro o uso de variável não declarada.
+- Limitação: `long` é exato só até 2^53, o maior inteiro que um `double` representa sem perda.
+- Blocos, `if`/`else` e `while` ainda não geram JavaScript (issue #52).
+
+A tradução foi verificada comparando, em cerca de 2.000 programas gerados aleatoriamente (com todos os tipos, operadores e conversões), o resultado do JavaScript no Node.js com o do mesmo programa compilado pelo `gcc`.
+
 ## Integrantes
  
 <table align="center">
