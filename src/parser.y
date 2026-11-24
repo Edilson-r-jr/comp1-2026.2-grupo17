@@ -6,6 +6,7 @@
 #include "tabela.h"
 #include "semantica.h"
 #include "tac.h"
+#include "gerador_js.h"
 
 /* Protótipos das funções necessárias para o Bison */
 int yylex(void);
@@ -330,10 +331,11 @@ int main(int argc, char **argv) {
     SetConsoleCP(CODEPAGE_UTF8);
 #endif
 
-    /* Uso: ./parser [--tabela] [--ast] [--tac] [arquivo] */
+    /* Uso: ./parser [--tabela] [--ast] [--tac] [--js] [arquivo] */
     int mostrar_tabela = 0;
     int mostrar_ast = 0;
     int mostrar_tac = 0;
+    int gerar_js = 0;
     const char *arquivo = NULL;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--tabela") == 0 || strcmp(argv[i], "-t") == 0)
@@ -342,6 +344,8 @@ int main(int argc, char **argv) {
             mostrar_ast = 1;
         else if (strcmp(argv[i], "--tac") == 0)
             mostrar_tac = 1;
+        else if (strcmp(argv[i], "--js") == 0)
+            gerar_js = 1;
         else
             arquivo = argv[i];
     }
@@ -399,6 +403,12 @@ int main(int argc, char **argv) {
     if (mostrar_tac && resultado == 0 && erros_lexicos == 0 &&
         erros_sintaticos == 0 && erros_semanticos == 0) {
         tac_gerar(ast_raiz_programa, stdout);
+    }
+
+    /* Código final em JavaScript (Issue #51): mesma condição do TAC */
+    if (gerar_js && resultado == 0 && erros_lexicos == 0 &&
+        erros_sintaticos == 0 && erros_semanticos == 0) {
+        gerador_js_gerar(ast_raiz_programa, stdout);
     }
     
     tabela_liberar();

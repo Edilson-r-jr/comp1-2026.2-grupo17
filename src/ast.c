@@ -272,3 +272,16 @@ void ast_liberar(NoAST *raiz)
         raiz = proximo;
     }
 }
+
+char *ast_nome_variavel(const NoAST *no)
+{
+    if (no->simbolo == NULL)
+        return strdup(no->texto);
+
+    if (no->simbolo->escopo == ESCOPO_GLOBAL)
+        return strdup(no->simbolo->nome);
+
+    char buf[128];
+    snprintf(buf, sizeof buf, "%s$%d", no->simbolo->nome, no->simbolo->escopo);
+    return strdup(buf);
+}
