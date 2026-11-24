@@ -28,6 +28,7 @@ test: $(EXEC)
 	../tests/run_tests.sh
 	../tests/run_ast_tests.sh
 	../tests/run_scanner_tests.sh
+	../tests/run_tac_tests.sh
 
 clean:
 	rm -f $(EXEC) $(BISON_C) $(BISON_H) $(FLEX_C)
