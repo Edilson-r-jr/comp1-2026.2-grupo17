@@ -16,15 +16,13 @@ ERROS=".tmp_erros_$$.txt"
 trap 'rm -f "$RESULTADO" "$ERROS"' EXIT
 RELATORIO="relatorio.txt"
 
-# Pastas dos tipos de teste
+# Pastas dos tipos de teste (os de TAC ficam em run_tac_tests.sh)
 DIR_TESTES="entradas"
 DIR_RESPOSTAS="respostas"
 DIR_TESTES_ERRO="entradas_erro"
 DIR_RESPOSTAS_ERRO="respostas_erro"
 DIR_TESTES_TABELA="entradas_tabela"
 DIR_RESPOSTAS_TABELA="respostas_tabela"
-DIR_TESTES_TAC="entradas_tac"
-DIR_RESPOSTAS_TAC="respostas_tac"
 
 echo -e "${AMARELO}==> Rodando bateria de testes...${RESET}\n"
 
@@ -46,7 +44,7 @@ FALHOU=0
 IGNORADOS=0
 FALHAS=()
 
-# ---------- Testes que devem PASSAR (compara stdout com --ast) ----------
+# ---------- Testes que devem PASSAR (compara stdout) ----------
 for ARQUIVO_ENTRADA in "$DIR_TESTES"/*.txt; do
     [ -e "$ARQUIVO_ENTRADA" ] || continue
 
@@ -157,46 +155,6 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES_TABELA"/*.txt; do
             echo "--- Entrada ---"; cat "$ARQUIVO_ENTRADA"; echo ""
             echo "--- Saída esperada ---"; cat "$ARQUIVO_RESPOSTA"; echo ""
             echo "--- Saída obtida ---"; cat "$RESULTADO"; echo ""
-            echo "--- Diferenças ---"; diff "$ARQUIVO_RESPOSTA" "$RESULTADO"; echo ""
-            echo "--- stderr ---"
-            [ -s "$ERROS" ] && cat "$ERROS" || echo "(vazio)"
-            echo ""
-        } >> "$RELATORIO"
-    fi
-    ((TOTAL++))
-done
-
-# ---------- Testes de geração de TAC (compara stdout com --tac) ----------
-for ARQUIVO_ENTRADA in "$DIR_TESTES_TAC"/*.txt; do
-    [ -e "$ARQUIVO_ENTRADA" ] || continue
-
-    NOME_TESTE=$(basename "$ARQUIVO_ENTRADA" .txt)
-    ARQUIVO_RESPOSTA="$DIR_RESPOSTAS_TAC/$NOME_TESTE.txt"
-
-    if [ ! -f "$ARQUIVO_RESPOSTA" ]; then
-        echo -e "${VERMELHO}[ERRO] Sem resposta de TAC para '$NOME_TESTE'.${RESET}"
-        ((IGNORADOS++)); continue
-    fi
-
-    echo -e "${AMARELO}Rodando teste (TAC): $NOME_TESTE${RESET}"
-    "$EXECUTAVEL" --tac < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
-    STATUS=$?
-
-    if diff -q "$RESULTADO" "$ARQUIVO_RESPOSTA" > /dev/null; then
-        echo -e "${VERDE}[OK] '$NOME_TESTE' passou.${RESET}\n"
-        ((PASSOU++))
-    else
-        echo -e "${VERMELHO}[FALHA] '$NOME_TESTE' não bateu com o TAC esperado.${RESET}\n"
-        FALHAS+=("$NOME_TESTE (TAC)")
-        ((FALHOU++))
-        {
-            echo "----------------------------------------"
-            echo "TESTE DE TAC FALHOU: $NOME_TESTE"
-            echo "Código de saída: $STATUS"
-            echo ""
-            echo "--- Entrada ---"; cat "$ARQUIVO_ENTRADA"; echo ""
-            echo "--- TAC esperado (stdout) ---"; cat "$ARQUIVO_RESPOSTA"; echo ""
-            echo "--- TAC obtido (stdout) ---"; cat "$RESULTADO"; echo ""
             echo "--- Diferenças ---"; diff "$ARQUIVO_RESPOSTA" "$RESULTADO"; echo ""
             echo "--- stderr ---"
             [ -s "$ERROS" ] && cat "$ERROS" || echo "(vazio)"

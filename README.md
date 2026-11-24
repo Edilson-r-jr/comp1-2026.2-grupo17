@@ -167,6 +167,13 @@ Os casos de teste de código intermediário ficam em `tests/entradas_tac/` e sua
 ```bash
 cd src
 make test
+```
+
+Só a bateria de TAC:
+
+```bash
+./tests/run_tac_tests.sh
+```
 
 ## Integrantes
  
