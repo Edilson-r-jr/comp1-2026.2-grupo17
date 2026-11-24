@@ -11,11 +11,12 @@ RESET='\033[0m'
 # Linux/WSL gera "parser"; Windows (MinGW) gera "parser.exe"
 EXECUTAVEL="../src/parser"
 [ -f "$EXECUTAVEL" ] || EXECUTAVEL="../src/parser.exe"
-RESULTADO="/tmp/resultado.txt"
-ERROS="/tmp/erros.txt"
+RESULTADO=".tmp_resultado_$$.txt"
+ERROS=".tmp_erros_$$.txt"
+trap 'rm -f "$RESULTADO" "$ERROS"' EXIT
 RELATORIO="relatorio.txt"
 
-# Pastas dos dois tipos de teste
+# Pastas dos tipos de teste (os de TAC ficam em run_tac_tests.sh)
 DIR_TESTES="entradas"
 DIR_RESPOSTAS="respostas"
 DIR_TESTES_ERRO="entradas_erro"
@@ -56,7 +57,6 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES"/*.txt; do
     fi
 
     echo -e "${AMARELO}Rodando teste (saída): $NOME_TESTE${RESET}"
-    # ADICIONADA A FLAG --ast AQUI
     "$EXECUTAVEL" --ast < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
     STATUS=$?
 
@@ -100,7 +100,6 @@ for ARQUIVO_ENTRADA in "$DIR_TESTES_ERRO"/*.txt; do
     "$EXECUTAVEL" < "$ARQUIVO_ENTRADA" > "$RESULTADO" 2> "$ERROS"
     STATUS=$?
 
-    # Aqui comparamos o STDERR com a resposta esperada
     if diff -q "$ERROS" "$ARQUIVO_RESPOSTA" > /dev/null; then
         echo -e "${VERDE}[OK] '$NOME_TESTE' produziu o erro esperado.${RESET}\n"
         ((PASSOU++))
