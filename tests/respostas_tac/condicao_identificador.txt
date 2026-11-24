@@ -1,0 +1,4 @@
+a = 1
+ifFalse a goto L0
+a = 2
+L0:

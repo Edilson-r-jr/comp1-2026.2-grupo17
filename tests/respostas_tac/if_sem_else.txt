@@ -1,0 +1,7 @@
+a = 1
+x = 0
+t0 = a > 0
+ifFalse t0 goto L0
+t1 = a + 1
+x = t1
+L0:

@@ -1,0 +1,9 @@
+a = 1
+b = 2
+t0 = a < b
+ifFalse t0 goto L0
+x = 1
+goto L1
+L0:
+x = 2
+L1:

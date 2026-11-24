@@ -23,15 +23,85 @@
 /* Contador das temporárias t0, t1, ... (zerado em tac_gerar) */
 static int contador_temp;
 static FILE *saida_tac;
+static int contador_rotulo;
 
 static char *gerar_expressao(const NoAST *no);
 static void gerar_instrucao(const NoAST *no);
+static char *novo_rotulo(void);
+static void gerar_if(const NoAST *no);
+static void gerar_bloco(const NoAST *bloco);
+
+static void gerar_if(const NoAST *no)
+{
+    char *condicao = gerar_expressao(no->esq);
+
+    if (no->terceiro == NULL)
+    {
+        /* if sem else */
+        char *fim = novo_rotulo();
+
+        fprintf(saida_tac, "ifFalse %s goto %s\n", condicao, fim);
+
+        gerar_bloco(no->dir);
+
+        fprintf(saida_tac, "%s:\n", fim);
+
+        free(fim);
+    }
+    else
+    {
+        /* if com else */
+        char *rotulo_else = novo_rotulo();
+        char *fim = novo_rotulo();
+
+        fprintf(saida_tac, "ifFalse %s goto %s\n",
+                condicao, rotulo_else);
+
+        gerar_bloco(no->dir);
+
+        fprintf(saida_tac, "goto %s\n", fim);
+        fprintf(saida_tac, "%s:\n", rotulo_else);
+
+        gerar_bloco(no->terceiro);
+
+        fprintf(saida_tac, "%s:\n", fim);
+
+        free(rotulo_else);
+        free(fim);
+    }
+
+    free(condicao);
+}
 
 /* Cria o nome da próxima temporária: t0, t1, t2, ... */
 static char *nova_temp(void)
 {
     char buf[32];
     snprintf(buf, sizeof buf, "t%d", contador_temp++);
+    return strdup(buf);
+}
+
+/* Cria o nome do próximo rótulo: L0, L1, L2, ... */
+static char *novo_rotulo(void)
+{
+    char buf[32];
+    snprintf(buf, sizeof buf, "L%d", contador_rotulo++);
+    return strdup(buf);
+}
+
+/* Retorna o nome da variável considerando seu escopo semântico. */
+static char *nome_variavel(const NoAST *no)
+{
+    if (no->simbolo == NULL)
+        return strdup(no->texto);
+
+    if (no->simbolo->escopo == ESCOPO_GLOBAL)
+        return strdup(no->simbolo->nome);
+
+    char buf[128];
+    snprintf(buf, sizeof buf, "%s_%d",
+             no->simbolo->nome, no->simbolo->escopo);
+
     return strdup(buf);
 }
 
@@ -84,7 +154,7 @@ static char *gerar_expressao(const NoAST *no)
     if (no->tipo == AST_NUMERO)
         return texto_numero(no);
     if (no->tipo == AST_IDENTIFICADOR)
-        return strdup(no->texto);
+        return nome_variavel(no);
 
     /* Menos unário: tN = - operando */
     if (no->tipo == AST_MENOS_UNARIO)
@@ -120,6 +190,19 @@ static void gerar_copia(const char *destino, const NoAST *expressao)
     free(valor);
 }
 
+static void gerar_bloco(const NoAST *bloco)
+{
+    if (bloco == NULL)
+        return;
+
+    for (const NoAST *no = bloco->esq;
+         no != NULL;
+         no = no->proximo)
+    {
+        gerar_instrucao(no);
+    }
+}
+
 static void gerar_instrucao(const NoAST *no)
 {
     switch (no->tipo)
@@ -127,13 +210,21 @@ static void gerar_instrucao(const NoAST *no)
     case AST_DECLARACAO:
         /* Só a inicialização vira código; "int x;" não emite nada */
         if (no->esq != NULL)
-            gerar_copia(no->texto, no->esq);
+        {
+            char *destino = nome_variavel(no);
+            gerar_copia(destino, no->esq);
+            free(destino);
+        }
         break;
 
     case AST_ATRIBUICAO:
-        /* 3. Correção da Semana 8: x = t1, e não t2 = x = t1 */
-        gerar_copia(no->texto, no->esq);
+    {
+        /* Usa o símbolo semântico para respeitar o escopo da variável. */
+        char *destino = nome_variavel(no);
+        gerar_copia(destino, no->esq);
+        free(destino);
         break;
+    }
 
     case AST_EXPRESSAO:
         /* "a + b;": as operações são geradas, o resultado é descartado */
@@ -141,11 +232,11 @@ static void gerar_instrucao(const NoAST *no)
         break;
 
     case AST_BLOCO:
+        gerar_bloco(no);
+        break;
+
     case AST_IF:
-        /* Controle de fluxo entra na issue #42 */
-        fprintf(stderr, "Aviso [Linha %d, Col %d]: geração de TAC para "
-                        "if/else e blocos ainda não implementada\n",
-                no->linha, no->coluna);
+        gerar_if(no);
         break;
 
     default:
@@ -159,6 +250,7 @@ void tac_gerar(const NoAST *raiz, FILE *saida)
         return;
 
     contador_temp = 0;
+    contador_rotulo = 0;
     saida_tac = saida;
 
     /* AST_PROGRAMA: instruções encadeadas por 'proximo' a partir de esq */
