@@ -29,7 +29,38 @@ static char *gerar_expressao(const NoAST *no);
 static void gerar_instrucao(const NoAST *no);
 static char *novo_rotulo(void);
 static void gerar_if(const NoAST *no);
+static void gerar_while(const NoAST *no);
 static void gerar_bloco(const NoAST *bloco);
+
+/* while (cond) { corpo }  vira:
+ *   Linicio:
+ *   <código da condição>
+ *   ifFalse cond goto Lfim
+ *   <corpo>
+ *   goto Linicio
+ *   Lfim:
+ * A condição fica depois do rótulo de início para ser reavaliada a cada
+ * volta. Os dois rótulos são criados antes de gerar qualquer código, então
+ * o laço externo recebe os números menores. */
+static void gerar_while(const NoAST *no)
+{
+    char *inicio = novo_rotulo();
+    char *fim = novo_rotulo();
+
+    fprintf(saida_tac, "%s:\n", inicio);
+
+    char *condicao = gerar_expressao(no->esq);
+    fprintf(saida_tac, "ifFalse %s goto %s\n", condicao, fim);
+
+    gerar_bloco(no->dir);
+
+    fprintf(saida_tac, "goto %s\n", inicio);
+    fprintf(saida_tac, "%s:\n", fim);
+
+    free(condicao);
+    free(inicio);
+    free(fim);
+}
 
 static void gerar_if(const NoAST *no)
 {
@@ -237,6 +268,10 @@ static void gerar_instrucao(const NoAST *no)
 
     case AST_IF:
         gerar_if(no);
+        break;
+
+    case AST_WHILE:
+        gerar_while(no);
         break;
 
     default:

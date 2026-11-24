@@ -26,6 +26,7 @@ typedef enum
                           abre um escopo novo na análise semântica */
     AST_IF,            /* esq = condição, dir = bloco do if,
                           terceiro = bloco do else (ou NULL) */
+    AST_WHILE,         /* esq = condição, dir = bloco do laço */
 
     /* Folhas */
     AST_NUMERO,        /* literal; tipo_c diz se o valor está em .i ou .r */
@@ -94,6 +95,7 @@ NoAST *ast_criar_expressao(NoAST *expressao, int linha, int coluna);
 NoAST *ast_criar_bloco(NoAST *instrucoes, int linha, int coluna);
 NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao,
                     int linha, int coluna);
+NoAST *ast_criar_while(NoAST *condicao, NoAST *bloco, int linha, int coluna);
 NoAST *ast_criar_programa(NoAST *instrucoes);
 
 /* Coloca 'no' no fim da lista iniciada em 'lista' e devolve o início.

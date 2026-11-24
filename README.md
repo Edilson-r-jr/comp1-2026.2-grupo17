@@ -77,8 +77,9 @@ Com base nessa análise, o grupo chegou à tabela abaixo, com os requisitos que 
 | Tabela de símbolos: erros de redeclaração e de variável não declarada |   ✅   |
 | Operadores `+ - * /` e `-` unário, com promoção de tipos              |   ✅   |
 | `%`, operadores relacionais e lógicos, `!`                            |   ⬜   |
-| `if`/`else`, `while`, `do-while`, `for`, `break`, `continue`          |   ⬜   |
-| Blocos e pilha de escopos                                             |   ⬜   |
+| `if`/`else` e `while` (corpo sempre entre chaves)                     |   ✅   |
+| `do-while`, `for`, `break`, `continue`                                |   ⬜   |
+| Blocos e pilha de escopos                                             |   ✅   |
 | Funções, `return`, recursão, `main`                                   |   ⬜   |
 | `printf` e _runtime_ JS                                               |   ⬜   |
 | Ignorar `#include <stdio.h>` e `#include <stdbool.h>`                 |   ⬜   |
@@ -158,7 +159,29 @@ y = t2
 - A atribuição copia o resultado direto para a variável (`y = t2`), sem temporária extra.
 - Declaração sem inicialização (`int y;`) não gera instrução.
 - O TAC só é gerado se o programa não tiver erros léxicos, sintáticos ou semânticos.
-- Controle de fluxo (`if`/`else`, `while`) ainda não gera TAC (issues #42 e #44).
+- `if`/`else` e `while` usam rótulos (`L0`, `L1`, ...) e saltos (`goto`, `ifFalse ... goto`).
+
+Exemplo com `while`. Entrada:
+
+```c
+int i = 0;
+while (i < 10) { i = i + 1; }
+```
+
+Saída:
+
+```text
+i = 0
+L0:
+t0 = i < 10
+ifFalse t0 goto L1
+t1 = i + 1
+i = t1
+goto L0
+L1:
+```
+
+A condição fica logo depois do rótulo de início, para ser reavaliada a cada volta do laço.
 
 ## Integrantes
  

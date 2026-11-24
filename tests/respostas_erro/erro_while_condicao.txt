@@ -1,0 +1,2 @@
+Erro Semântico [Linha 2, Col 8]: Variável 'y' não declarada
+1 erro(s) semântico(s) encontrado(s).

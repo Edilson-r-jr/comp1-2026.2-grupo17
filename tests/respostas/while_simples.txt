@@ -1,0 +1,12 @@
+AST_PROGRAMA
+  AST_DECLARACAO (int i) [int] [símbolo: i, linha 1]
+    AST_NUMERO (0) [int]
+  AST_WHILE
+    AST_MENOR [int]
+      AST_IDENTIFICADOR (i) [int] [símbolo: i, linha 1]
+      AST_NUMERO (10) [int]
+    AST_BLOCO
+      AST_ATRIBUICAO (i) [int] [símbolo: i, linha 1]
+        AST_SOMA [int]
+          AST_IDENTIFICADOR (i) [int] [símbolo: i, linha 1]
+          AST_NUMERO (1) [int]
