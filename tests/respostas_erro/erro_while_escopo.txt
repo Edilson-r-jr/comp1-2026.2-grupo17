@@ -1,0 +1,2 @@
+Erro Semântico [Linha 6, Col 1]: Variável 'k' não declarada
+1 erro(s) semântico(s) encontrado(s).

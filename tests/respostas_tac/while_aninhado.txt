@@ -1,0 +1,28 @@
+a = 1
+x = 0
+t0 = a > 0
+ifFalse t0 goto L0
+L1:
+t1 = x < 5
+ifFalse t1 goto L2
+t2 = x + 1
+x = t2
+goto L1
+L2:
+L0:
+L3:
+t3 = a < 10
+ifFalse t3 goto L4
+t4 = a * 2
+d_3 = t4
+t5 = d_3 > 6
+ifFalse t5 goto L5
+x = d_3
+goto L6
+L5:
+x = 0
+L6:
+t6 = a + 1
+a = t6
+goto L3
+L4:

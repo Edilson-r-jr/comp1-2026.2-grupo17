@@ -137,6 +137,10 @@ instrucao:
     | IF LPAREN exp RPAREN bloco ELSE bloco {
         $$ = ast_criar_if($3, $5, $7, @1.first_line, @1.first_column);
     }
+    /* O corpo do while também exige chaves, como no if */
+    | WHILE LPAREN exp RPAREN bloco {
+        $$ = ast_criar_while($3, $5, @1.first_line, @1.first_column);
+    }
     | error SEMICOLON {
         /* Recuperação de erro sintático: descarta até o próximo ';' e
          * retorna NULL para a AST ignorar a instrução */

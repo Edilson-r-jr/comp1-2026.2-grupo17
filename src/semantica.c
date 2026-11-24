@@ -197,6 +197,14 @@ static void analisar_instrucao(NoAST *no)
         analisar_instrucao(no->terceiro);
         break;
 
+    case AST_WHILE:
+        /* Condição: expressão comum, com erros reportados normalmente.
+         * Corpo: AST_BLOCO, que abre escopo próprio em analisar_bloco,
+         * então o que é declarado dentro do laço não é visível fora. */
+        analisar_expressao(no->esq);
+        analisar_instrucao(no->dir);
+        break;
+
     default:
         break;
     }

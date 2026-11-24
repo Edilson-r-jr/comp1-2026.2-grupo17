@@ -121,6 +121,15 @@ NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao,
     return no;
 }
 
+/* while (condicao) bloco */
+NoAST *ast_criar_while(NoAST *condicao, NoAST *bloco, int linha, int coluna)
+{
+    NoAST *no = criar_no_base(AST_WHILE, linha, coluna);
+    no->esq = condicao;
+    no->dir = bloco;
+    return no;
+}
+
 NoAST *ast_criar_programa(NoAST *instrucoes)
 {
     NoAST *no = criar_no_base(AST_PROGRAMA, 1, 1);
@@ -151,6 +160,7 @@ static const char *nome_no(TipoNoAST tipo)
     case AST_EXPRESSAO:     return "AST_EXPRESSAO";
     case AST_BLOCO:         return "AST_BLOCO";
     case AST_IF:            return "AST_IF";
+    case AST_WHILE:         return "AST_WHILE";
     case AST_NUMERO:        return "AST_NUMERO";
     case AST_IDENTIFICADOR: return "AST_IDENTIFICADOR";
     case AST_SOMA:          return "AST_SOMA";
