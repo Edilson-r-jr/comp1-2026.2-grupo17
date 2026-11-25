@@ -13,8 +13,8 @@
  * double de 64 bits. Por isso o gerador usa o tipo de cada nó (tipo_c,
  * anotado pela semântica) para simular o comportamento do C; as regras
  * estão no README, seção "Geração de JavaScript".
- *
  * Issue #51: declarações, atribuições e expressões.
+ * Issue #52: controle de fluxo (blocos, if/else, while).
  * Controle de fluxo (blocos, if/else, while) fica para a issue #52.
  */
 #ifndef GERADOR_JS_H

@@ -251,7 +251,39 @@ Nas atribuições e declarações, o valor é convertido para o tipo da variáve
 - `char` vira o código numérico do caractere (`'a'` → `97`).
 - O arquivo começa com `"use strict";`, que transforma em erro o uso de variável não declarada.
 - Limitação: `long` é exato só até 2^53, o maior inteiro que um `double` representa sem perda.
-- Blocos, `if`/`else` e `while` ainda não geram JavaScript (issue #52).
+
+Exemplo com `if`/`else` e `while`. Entrada:
+
+```c
+int i = 0;
+int soma = 0;
+while (i < 5) {
+    if (i == 2) {
+        soma = soma + 10;
+    } else {
+        soma = soma + i;
+    }
+    i = i + 1;
+}
+```
+
+Saída:
+
+```js
+"use strict";
+let i = 0;
+let soma = 0;
+while (i < 5) {
+    if (i === 2) {
+        soma = ((soma + 10) | 0);
+    } else {
+        soma = ((soma + i) | 0);
+    }
+    i = ((i + 1) | 0);
+}
+```
+
+Nas condições de `if` e `while`, comparações saem diretamente (`i < 5`, `i === 2`), sem a conversão `? 1 : 0` usada em expressões atribuídas a variáveis.
 
 A tradução foi verificada comparando, em cerca de 2.000 programas gerados aleatoriamente (com todos os tipos, operadores e conversões), o resultado do JavaScript no Node.js com o do mesmo programa compilado pelo `gcc`.
 

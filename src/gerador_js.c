@@ -1,23 +1,23 @@
 /* FGA0003 - Compiladores 1
- * Curso de Engenharia de Software
- * Universidade de Brasília (UnB)
- * Semana 10 - prática de geração de código final
- * gerador_js.c - Geração de código JavaScript a partir da AST
+- Curso de Engenharia de Software
+- Universidade de Brasília (UnB)
+- Semana 10 - prática de geração de código final
+- gerador_js.c - Geração de código JavaScript a partir da AST
  *
- * Mesma ideia do gerador de TAC: cada expressão é traduzida de baixo para
- * cima e devolve uma string (alocada com malloc, liberada por quem recebe)
- * com o código JS equivalente. As instruções são emitidas uma por linha.
+- Mesma ideia do gerador de TAC: cada expressão é traduzida de baixo para
+- cima e devolve uma string (alocada com malloc, liberada por quem recebe)
+- com o código JS equivalente. As instruções são emitidas uma por linha.
  *
- * Simulação dos tipos do C (o tipo do resultado vem de no->tipo_c):
- *   int     + e -       ((a + b) | 0)       "| 0" trunca para 32 bits
- *           *           Math.imul(a, b)     multiplicação exata em 32 bits
- *           /           ((a / b) | 0)       divisão inteira, trunca
- *   long    + - *       (a + b)             sem truncamento (limitação:
- *           /           Math.trunc(a / b)    exato só até 2^53)
- *   float   qualquer    Math.fround(a + b)  arredonda para precisão float
- *   double  qualquer    (a + b)             já é o número do JS
- *   comparação          (a < b ? 1 : 0)     no C o resultado é int 1/0
- * Toda expressão sai entre parênteses, então a precedência é a da AST.
+- Simulação dos tipos do C (o tipo do resultado vem de no->tipo_c):
+-   int     + e -       ((a + b) | 0)       "| 0" trunca para 32 bits
+-           *           Math.imul(a, b)     multiplicação exata em 32 bits
+-           /           ((a / b) | 0)       divisão inteira, trunca
+-   long    + - *       (a + b)             sem truncamento (limitação:
+-           /           Math.trunc(a / b)    exato só até 2^53)
+-   float   qualquer    Math.fround(a + b)  arredonda para precisão float
+-   double  qualquer    (a + b)             já é o número do JS
+-   comparação          (a < b ? 1 : 0)     no C o resultado é int 1/0
+- Toda expressão sai entre parênteses, então a precedência é a da AST.
  */
 #include <stdarg.h>
 #include <stdlib.h>
@@ -65,14 +65,14 @@ static int eh_int32(int tipo)
 }
 
 /* Literal: inteiros (char vira o código numérico) e reais. Um literal
- * float passa por Math.fround para ter a mesma precisão do C. */
+- float passa por Math.fround para ter a mesma precisão do C. */
 static char *texto_numero(const NoAST *no)
 {
     if (!tipo_eh_real(no->tipo_c))
         return formatar("%ld", no->valor.i);
 
     /* Menor representação que volta ao mesmo double (0.1, e não
-     * 0.10000000000000001) */
+- 0.10000000000000001) */
     char buf[64];
     snprintf(buf, sizeof buf, "%.15g", no->valor.r);
     if (strtod(buf, NULL) != no->valor.r)
@@ -86,7 +86,7 @@ static char *texto_numero(const NoAST *no)
 }
 
 /* Converte 'expr' (do tipo 'origem') para o tipo 'destino', como numa
- * atribuição em C. Real -> inteiro não aparece: a semântica rejeita. */
+- atribuição em C. Real -> inteiro não aparece: a semântica rejeita. */
 static char *converter(char *expr, int origem, int destino)
 {
     char *convertida = NULL;
@@ -192,6 +192,37 @@ static char *gerar_valor(const NoAST *expressao, int tipo_destino)
                      tipo_destino);
 }
 
+/* Condição de if/while: se a raiz já é uma comparação, emite direto
+ * (ex.: "i < 5") sem o ternário "(... ? 1 : 0)" usado em atribuições. */
+static char *gerar_condicao(const NoAST *no)
+{
+    const char *op = operador_comparacao(no->tipo);
+    if (op != NULL)
+    {
+        char *esq = gerar_expressao(no->esq);
+        char *dir = gerar_expressao(no->dir);
+        char *resultado = formatar("%s %s %s", esq, op, dir);
+        free(esq);
+        free(dir);
+        return resultado;
+    }
+    return gerar_expressao(no);
+}
+
+/* Emite as instruções internas de um AST_BLOCO (ou instrução única)
+ * com um nível a mais de indentação, sem abrir/fechar chaves. */
+static void emitir_corpo_bloco(const NoAST *bloco)
+{
+    if (bloco == NULL)
+        return;
+
+    nivel_indentacao++;
+    const NoAST *inst = (bloco->tipo == AST_BLOCO) ? bloco->esq : bloco;
+    for (; inst != NULL; inst = inst->proximo)
+        gerar_instrucao(inst);
+    nivel_indentacao--;
+}
+
 static void gerar_instrucao(const NoAST *no)
 {
     switch (no->tipo)
@@ -199,7 +230,7 @@ static void gerar_instrucao(const NoAST *no)
     case AST_DECLARACAO:
     {
         /* Em C a variável não inicializada tem lixo; em JS seria
-         * undefined, que estraga contas. Começa em 0. */
+- undefined, que estraga contas. Começa em 0. */
         char *nome = ast_nome_variavel(no);
         char *valor = no->esq ? gerar_valor(no->esq, no->tipo_c)
                               : strdup("0");
@@ -229,13 +260,39 @@ static void gerar_instrucao(const NoAST *no)
     }
 
     case AST_BLOCO:
-    case AST_IF:
-    case AST_WHILE:
-        /* Controle de fluxo entra na issue #52 */
-        fprintf(stderr, "Aviso [Linha %d, Col %d]: geração de JavaScript "
-                        "para blocos, if/else e while ainda não implementada\n",
-                no->linha, no->coluna);
+        emitir_linha("{");
+        emitir_corpo_bloco(no);
+        emitir_linha("}");
         break;
+
+    case AST_IF:
+    {
+        char *cond = gerar_condicao(no->esq);
+        emitir_linha("if (%s) {", cond);
+        free(cond);
+
+        emitir_corpo_bloco(no->dir);
+
+        if (no->terceiro != NULL)
+        {
+            emitir_linha("} else {");
+            emitir_corpo_bloco(no->terceiro);
+        }
+        emitir_linha("}");
+        break;
+    }
+
+    case AST_WHILE:
+    {
+        char *cond = gerar_condicao(no->esq);
+        emitir_linha("while (%s) {", cond);
+        free(cond);
+
+        emitir_corpo_bloco(no->dir);
+
+        emitir_linha("}");
+        break;
+    }
 
     default:
         break;
