@@ -45,7 +45,7 @@ static const char *const RUNTIME_PRINTF[] = {
     "    const texto = formato.replace(/%(l?[dif]|c|%)/g, (_, esp) => {",
     "        if (esp === \"%\") return \"%\";",
     "        const v = args[i++];",
-    "        if (esp === \"c\") return String.fromCharCode(v);",
+    "        if (esp === \"c\") return String.fromCharCode(Number(v) & 0xFF);",
     "        if (esp.endsWith(\"f\")) {",
     "            if (v === Infinity) return \"inf\";",
     "            if (v === -Infinity) return \"-inf\";",

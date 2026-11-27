@@ -63,7 +63,7 @@ EXPOENTE   [eE][+-]?{DIGITO}+
 
  /* #include dos cabeçalhos que o compilador já cobre: a linha é ignorada.
   * Qualquer outro #include cai na regra final e vira erro léxico. */
-^[ \t]*"#"[ \t]*"include"[ \t]*"<"("stdio"|"stdbool")".h>"[ \t]*  { /* ignora */ }
+^[ \t]*"#"[ \t]*"include"[ \t]*"<"("stdio"|"stdbool")".h>"[ \t\r]*  { /* ignora */ }
 
  /* Qualquer outra diretiva (#include <math.h>, #define, ...) vira um único
   * erro léxico, e a linha inteira é descartada. Para os dois cabeçalhos
