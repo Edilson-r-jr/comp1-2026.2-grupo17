@@ -33,6 +33,9 @@ static void atualiza_local(void);
 /* Converte um literal de caractere ('a', '\n', ...) no seu código */
 static char valor_char(const char *texto);
 
+/* Converte um literal de string ("a\tb\n") no texto real, sem as aspas */
+static char *decodificar_string(const char *texto);
+
 /* Executada automaticamente antes da ação de TODA regra */
 #define YY_USER_ACTION atualiza_local();
 %}
@@ -58,6 +61,18 @@ EXPOENTE   [eE][+-]?{DIGITO}+
                              a coluna volta para 1 em atualiza_local() */ }
 "//".*                  { /* ignora comentários de linha */ }
 
+ /* #include dos cabeçalhos que o compilador já cobre: a linha é ignorada.
+  * Qualquer outro #include cai na regra final e vira erro léxico. */
+^[ \t]*"#"[ \t]*"include"[ \t]*"<"("stdio"|"stdbool")".h>"[ \t]*  { /* ignora */ }
+
+ /* Qualquer outra diretiva (#include <math.h>, #define, ...) vira um único
+  * erro léxico, e a linha inteira é descartada. Para os dois cabeçalhos
+  * aceitos, a regra de cima casa o mesmo tamanho e vence por vir antes. */
+^[ \t]*"#"[^\n]*  {
+    ERRO_LEXICO("Diretiva de pré-processador não suportada '%s' "
+                "(só #include <stdio.h> e #include <stdbool.h> são aceitos)", yytext);
+}
+
 "/*"([^*]|\*+[^*/])*\*+"/" { /* comentário multilinha fechado: ignora */ }
 
 "/*"([^*]|\*+[^*/])*\**    {
@@ -80,6 +95,7 @@ EXPOENTE   [eE][+-]?{DIGITO}+
 "double"                { return DOUBLE; }
 "long"                  { return LONG; }
 "void"                  { return VOID; }
+"printf"                { return PRINTF; }
 
  /* Literais de ponto flutuante: 10.5  10.  .5  1e3  2.5e-3 */
 {DIGITO}+"."{DIGITO}*{EXPOENTE}?  |
@@ -117,6 +133,24 @@ EXPOENTE   [eE][+-]?{DIGITO}+
 \'([^'\\\n]|\\.)\'  {
     yylval.intValue = valor_char(yytext);
     return CARACTERE;
+}
+
+ /* Literal de string: "texto", com os escapes \n \t \\ e \" */
+\"([^"\\\n]|\\.)*\"  {
+    yylval.strValue = decodificar_string(yytext);
+    if (yylval.strValue == NULL) {
+        ERRO_LEXICO("Sequência de escape inválida na string %s", yytext);
+        yylval.strValue = strdup("");
+    }
+    return STRING;
+}
+
+ /* String que não fecha na mesma linha. Quando ela está fechada, a regra
+  * de cima casa um caractere a mais (a aspa final) e vence pelo maior
+  * casamento, como no comentário não fechado. */
+\"([^"\\\n]|\\.)*  {
+    ERRO_LEXICO("String não fechada");
+    return SEMICOLON;
 }
 
 {LETRA}({LETRA}|{DIGITO})*  {
@@ -166,6 +200,32 @@ static char valor_char(const char *texto) {
         case '"':  return '"';
         default:   return texto[2];
     }
+}
+
+/* texto aponta para algo como  "a\tb\n"  (com as aspas). Devolve uma cópia
+ * alocada só com o conteúdo, já com os escapes convertidos, ou NULL se
+ * houver um escape que a linguagem não aceita. */
+static char *decodificar_string(const char *texto) {
+    size_t tamanho = strlen(texto);
+    char *resultado = malloc(tamanho);   /* o texto decodificado nunca é maior */
+    size_t j = 0;
+
+    for (size_t i = 1; i + 1 < tamanho; i++) {   /* pula as aspas das pontas */
+        if (texto[i] != '\\') {
+            resultado[j++] = texto[i];
+            continue;
+        }
+        i++;
+        switch (texto[i]) {
+            case 'n':  resultado[j++] = '\n'; break;
+            case 't':  resultado[j++] = '\t'; break;
+            case '\\': resultado[j++] = '\\'; break;
+            case '"':  resultado[j++] = '"';  break;
+            default:   free(resultado); return NULL;
+        }
+    }
+    resultado[j] = '\0';
+    return resultado;
 }
 
 /*
