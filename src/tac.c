@@ -31,6 +31,7 @@ static char *novo_rotulo(void);
 static void gerar_if(const NoAST *no);
 static void gerar_while(const NoAST *no);
 static void gerar_bloco(const NoAST *bloco);
+static void gerar_printf(const NoAST *no);
 
 /* while (cond) { corpo }  vira:
  *   Linicio:
@@ -210,6 +211,40 @@ static void gerar_copia(const char *destino, const NoAST *expressao)
     free(valor);
 }
 
+/* printf(formato, a, b) vira a forma padrão de chamada do TAC:
+ *   <código de a e de b>
+ *   param "formato"
+ *   param a
+ *   param b
+ *   call printf, 3
+ * Todos os argumentos são calculados ANTES do primeiro 'param', para que
+ * as contas de um argumento não fiquem no meio da lista de parâmetros.
+ * O N do call conta o formato, que é o primeiro parâmetro do printf. */
+static void gerar_printf(const NoAST *no)
+{
+    int n = 0;
+    for (const NoAST *arg = no->esq; arg != NULL; arg = arg->proximo)
+        n++;
+
+    char **enderecos = malloc(sizeof(char *) * (size_t)(n > 0 ? n : 1));
+    int i = 0;
+    for (const NoAST *arg = no->esq; arg != NULL; arg = arg->proximo)
+        enderecos[i++] = gerar_expressao(arg);
+
+    char *formato = ast_texto_escapado(no->texto);
+    fprintf(saida_tac, "param %s\n", formato);
+    free(formato);
+
+    for (i = 0; i < n; i++)
+    {
+        fprintf(saida_tac, "param %s\n", enderecos[i]);
+        free(enderecos[i]);
+    }
+    free(enderecos);
+
+    fprintf(saida_tac, "call printf, %d\n", n + 1);
+}
+
 static void gerar_bloco(const NoAST *bloco)
 {
     if (bloco == NULL)
@@ -261,6 +296,10 @@ static void gerar_instrucao(const NoAST *no)
 
     case AST_WHILE:
         gerar_while(no);
+        break;
+
+    case AST_PRINTF:
+        gerar_printf(no);
         break;
 
     default:

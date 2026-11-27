@@ -1,0 +1,6 @@
+x = 5
+param "%d %f %d\n"
+param 7
+param 3.5
+param x
+call printf, 4

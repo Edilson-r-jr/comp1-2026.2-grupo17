@@ -1,0 +1,19 @@
+a = 3
+param "inicio\n"
+call printf, 1
+t0 = a * 2
+t1 = t0 + 1
+param "a = %d, a * 2 + 1 = %d\n"
+param a
+param t1
+call printf, 3
+L0:
+t2 = a > 0
+ifFalse t2 goto L1
+param "%d\t"
+param a
+call printf, 2
+t3 = a - 1
+a = t3
+goto L0
+L1:
