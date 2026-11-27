@@ -1,0 +1,3 @@
+double d = 2.5;
+printf("%.2f\n", d);
+printf("%s\n", d);

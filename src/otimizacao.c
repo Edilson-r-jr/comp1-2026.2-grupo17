@@ -277,6 +277,13 @@ static void otimizar_instrucao(NoAST *no)
             otimizar_instrucao(no->terceiro);
         break;
 
+    case AST_PRINTF:
+        /* Cada argumento é otimizado no lugar; virar_constante não mexe
+         * em 'proximo', então a lista de argumentos continua intacta. */
+        for (NoAST *arg = no->esq; arg != NULL; arg = arg->proximo)
+            otimizar_expressao(arg);
+        break;
+
     case AST_WHILE:
         otimizar_expressao(no->esq);
         if (no->dir)

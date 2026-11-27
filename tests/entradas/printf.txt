@@ -1,0 +1,8 @@
+#include <stdio.h>
+int x = 2;
+printf("sem argumentos\n");
+printf("x = %d, dobro = %d\t(%c)\n", x, x * 2, 'a');
+if (x > 1) {
+    double y = x / 4.0;
+    printf("y = %f e 100%%\n", y);
+}

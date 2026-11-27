@@ -1,0 +1,5 @@
+int a = 1;
+int b = 2;
+printf("%d e %d\n", a);
+printf("%d\n", a, b);
+printf("sem especificador\n", a);

@@ -1,0 +1,1 @@
+Erro Léxico [Linha 2, Col 1]: Diretiva de pré-processador não suportada '#include <math.h>' (só #include <stdio.h> e #include <stdbool.h> são aceitos)

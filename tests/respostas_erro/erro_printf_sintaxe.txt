@@ -1,0 +1,2 @@
+Erro Sintático [Linha 2, Col 8]: encontrado identificador, mas era esperado string
+Erro Sintático [Linha 4, Col 1]: encontrado identificador, mas era esperado ';'
