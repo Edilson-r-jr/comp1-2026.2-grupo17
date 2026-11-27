@@ -4,8 +4,8 @@ FLEX_FILE  = scanner.l
 BISON_C = parser.tab.c
 BISON_H = parser.tab.h
 FLEX_C  = lex.yy.c
-HEADERS = tabela.h ast.h semantica.h tac.h gerador_js.h
-SOURCES = tabela.c ast.c semantica.c tac.c gerador_js.c
+HEADERS = tabela.h ast.h semantica.h tac.h gerador_js.h otimizacao.h
+SOURCES = tabela.c ast.c semantica.c tac.c gerador_js.c otimizacao.c
 
 CC     = gcc
 # Adicionada a flag -g para facilitar o debug de memória com o valgrind

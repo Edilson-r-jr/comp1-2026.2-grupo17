@@ -1,0 +1,11 @@
+int x = 3;
+int a;
+double d;
+char c = 65;
+a = x + 0;
+a = x - 0;
+a = x * 1;
+a = x / 1;
+a = x * (3 - 2) + (2 - 2);
+d = (x + 0.0) / 2;
+a = c + 0;

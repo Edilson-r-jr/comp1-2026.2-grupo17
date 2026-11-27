@@ -7,6 +7,7 @@
 #include "semantica.h"
 #include "tac.h"
 #include "gerador_js.h"
+#include "otimizacao.h"
 
 /* Protótipos das funções necessárias para o Bison */
 int yylex(void);
@@ -331,11 +332,12 @@ int main(int argc, char **argv) {
     SetConsoleCP(CODEPAGE_UTF8);
 #endif
 
-    /* Uso: ./parser [--tabela] [--ast] [--tac] [--js] [arquivo] */
+    /* Uso: ./parser [--tabela] [--ast] [--tac] [--js] [--otimizar] [arquivo] */
     int mostrar_tabela = 0;
     int mostrar_ast = 0;
     int mostrar_tac = 0;
     int gerar_js = 0;
+    int otimizar = 0;
     const char *arquivo = NULL;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--tabela") == 0 || strcmp(argv[i], "-t") == 0)
@@ -346,6 +348,8 @@ int main(int argc, char **argv) {
             mostrar_tac = 1;
         else if (strcmp(argv[i], "--js") == 0)
             gerar_js = 1;
+        else if (strcmp(argv[i], "--otimizar") == 0)
+            otimizar = 1;
         else
             arquivo = argv[i];
     }
@@ -384,6 +388,13 @@ int main(int argc, char **argv) {
     if (erros_semanticos > 0) {
         fprintf(stderr, "%d erro(s) semântico(s) encontrado(s).\n",
                 erros_semanticos);
+    }
+
+    /* Otimização (Issue #50): constant folding depois da semântica e antes
+     * de --ast, --tac e --js, só para programas sem nenhum erro. */
+    if (otimizar && resultado == 0 && erros_lexicos == 0 &&
+        erros_sintaticos == 0 && erros_semanticos == 0) {
+        otimizacao_aplicar(ast_raiz_programa);
     }
 
     /* Imprime a AST se o argumento --ast foi passado (Exigência da Issue #28).
