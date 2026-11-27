@@ -1,0 +1,2 @@
+Erro Léxico [Linha 2, Col 8]: String não fechada
+Erro Sintático [Linha 2, Col 8]: encontrado ';', mas era esperado string

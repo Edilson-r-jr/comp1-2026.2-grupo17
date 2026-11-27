@@ -1,0 +1,18 @@
+#include <stdio.h>
+int x = 1;
+printf("fora: %d\n", x);
+{
+    int x = 2;
+    printf("bloco: %d\n", x);
+    {
+        double x = 3.5;
+        printf("bloco interno: %f\n", x);
+    }
+    printf("bloco de novo: %d\n", x);
+}
+if (x == 1) {
+    int x = 10;
+    x = x + 1;
+    printf("if: %d\n", x);
+}
+printf("fora de novo: %d\n", x);

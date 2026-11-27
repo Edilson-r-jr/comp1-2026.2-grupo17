@@ -1,0 +1,6 @@
+int x = 1;
+printf("%d %d\n", x, y);
+{
+    int z = 5;
+}
+printf("%d\n", z + 1);

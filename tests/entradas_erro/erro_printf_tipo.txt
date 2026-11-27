@@ -1,0 +1,8 @@
+int i = 3;
+long l = 4L;
+double d = 2.5;
+printf("%d\n", d);
+printf("%f\n", i);
+printf("%d\n", l);
+printf("%ld\n", i);
+printf("%c\n", d);

@@ -21,6 +21,7 @@ BATERIAS=(
     "Construção da AST|run_ast_tests.sh"
     "Scanner|run_scanner_tests.sh"
     "Código intermediário (TAC)|run_tac_tests.sh"
+    "JavaScript no Node.js (ponta a ponta)|run_js_tests.sh"
 )
 
 SAIDA=$(mktemp)

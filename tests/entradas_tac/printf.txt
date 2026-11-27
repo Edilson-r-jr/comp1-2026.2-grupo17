@@ -1,0 +1,7 @@
+int a = 3;
+printf("inicio\n");
+printf("a = %d, a * 2 + 1 = %d\n", a, a * 2 + 1);
+while (a > 0) {
+    printf("%d\t", a);
+    a = a - 1;
+}

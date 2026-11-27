@@ -1,0 +1,3 @@
+Erro Semântico [Linha 2, Col 1]: especificador '%.2f' não suportado no printf (use %d, %i, %ld, %c, %f, %lf ou %%)
+Erro Semântico [Linha 3, Col 1]: especificador '%s' não suportado no printf (use %d, %i, %ld, %c, %f, %lf ou %%)
+2 erro(s) semântico(s) encontrado(s).

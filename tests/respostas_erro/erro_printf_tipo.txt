@@ -1,0 +1,6 @@
+Erro Semântico [Linha 4, Col 16]: '%d' no printf espera char ou int, mas o argumento 1 é 'double'
+Erro Semântico [Linha 5, Col 16]: '%f' no printf espera float ou double, mas o argumento 1 é 'int'
+Erro Semântico [Linha 6, Col 16]: '%d' no printf espera char ou int, mas o argumento 1 é 'long'
+Erro Semântico [Linha 7, Col 17]: '%ld' no printf espera long, mas o argumento 1 é 'int'
+Erro Semântico [Linha 8, Col 16]: '%c' no printf espera char ou int, mas o argumento 1 é 'double'
+5 erro(s) semântico(s) encontrado(s).

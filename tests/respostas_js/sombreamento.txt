@@ -1,0 +1,6 @@
+fora: 1
+bloco: 2
+bloco interno: 3.500000
+bloco de novo: 2
+if: 11
+fora de novo: 1

@@ -7,6 +7,8 @@
  * (Duas passagens completas — primeiro todas as declarações, depois todos
  * os usos — aceitariam "a = 5; int a;" sem erro.)
  */
+#include <ctype.h>
+#include <string.h>
 #include "semantica.h"
 #include "tabela.h"
 
@@ -138,6 +140,114 @@ static int analisar_expressao(NoAST *no)
     return no->tipo_c;
 }
 
+/* ---------- printf ---------- */
+
+/* Especificadores aceitos no formato e os tipos que cada um aceita.
+ * As regras seguem o que o C faz de verdade ao passar o valor para o
+ * printf: char vira int, float vira double. Qualquer outra combinação
+ * (ex.: "%d" com double) é comportamento indefinido em C e imprimiria
+ * lixo, então é rejeitada: assim o JS gerado sempre imprime o mesmo que
+ * o programa compilado com gcc. */
+static int especificador_aceita(const char *esp, int tipo)
+{
+    if (strcmp(esp, "%d") == 0 || strcmp(esp, "%i") == 0 || strcmp(esp, "%c") == 0)
+        return tipo == TIPO_CHAR || tipo == TIPO_INT;
+    if (strcmp(esp, "%ld") == 0 || strcmp(esp, "%li") == 0)
+        return tipo == TIPO_LONG;
+    /* %f e %lf */
+    return tipo == TIPO_FLOAT || tipo == TIPO_DOUBLE;
+}
+
+static const char *descricao_especificador(const char *esp)
+{
+    if (strcmp(esp, "%ld") == 0 || strcmp(esp, "%li") == 0)
+        return "long";
+    if (strcmp(esp, "%f") == 0 || strcmp(esp, "%lf") == 0)
+        return "float ou double";
+    return "char ou int";
+}
+
+/* Lê o especificador que começa em fmt[0] == '%'. Copia-o para 'esp'
+ * (ex.: "%ld") e devolve quantos caracteres ele ocupa, ou 0 se não é um
+ * especificador suportado. "%%" devolve 2 com esp = "%%". */
+static int ler_especificador(const char *fmt, char esp[4])
+{
+    int n = 1;
+    if (fmt[1] == 'l' && (fmt[2] == 'd' || fmt[2] == 'i' || fmt[2] == 'f'))
+        n = 3;
+    else if (fmt[1] == 'd' || fmt[1] == 'i' || fmt[1] == 'c' ||
+             fmt[1] == 'f' || fmt[1] == '%')
+        n = 2;
+    else
+        return 0;
+
+    memcpy(esp, fmt, (size_t)n);
+    esp[n] = '\0';
+    return n;
+}
+
+/* Confere o formato do printf contra os argumentos (já analisados):
+ * especificadores suportados, quantidade e tipo de cada argumento. */
+static void verificar_printf(const NoAST *no)
+{
+    const NoAST *arg = no->esq;
+    int esperados = 0;
+    int recebidos = 0;
+
+    for (const NoAST *a = no->esq; a != NULL; a = a->proximo)
+        recebidos++;
+
+    for (const char *c = no->texto; *c; c++)
+    {
+        if (*c != '%')
+            continue;
+
+        char esp[4];
+        int tamanho = ler_especificador(c, esp);
+        if (tamanho == 0)
+        {
+            /* Sem saber o que o formato pede, contar argumentos não faz
+             * sentido: reporta só o especificador e para aqui. */
+            /* Mostra o especificador até a letra que o termina
+             * (ex.: "%.2f", "%5d", "%s") */
+            int fim = 1;
+            while (c[fim] && !isalpha((unsigned char)c[fim]) && c[fim] != '%')
+                fim++;
+            if (isalpha((unsigned char)c[fim]))
+                fim++;
+            definir_posicao(no->linha, no->coluna);
+            erro_semantico("especificador '%.*s' não suportado no printf "
+                           "(use %%d, %%i, %%ld, %%c, %%f, %%lf ou %%%%)",
+                           fim, c);
+            return;
+        }
+        c += tamanho - 1;
+        if (strcmp(esp, "%%") == 0)
+            continue;
+
+        esperados++;
+        if (arg == NULL)
+            continue; /* falta argumento: reportado depois do laço */
+
+        /* Argumento com erro já foi reportado: não gera erro em cascata */
+        if (arg->tipo_c != TIPO_ERRO && !especificador_aceita(esp, arg->tipo_c))
+        {
+            definir_posicao(arg->linha, arg->coluna);
+            erro_semantico("'%s' no printf espera %s, mas o argumento %d é '%s'",
+                           esp, descricao_especificador(esp), esperados,
+                           nome_tipo(arg->tipo_c));
+        }
+        arg = arg->proximo;
+    }
+
+    if (esperados != recebidos)
+    {
+        definir_posicao(no->linha, no->coluna);
+        erro_semantico("o formato do printf pede %d argumento(s), mas foram passados %d",
+                       esperados, recebidos);
+    }
+}
+
 /* Bloco { ... }: as declarações feitas dentro dele valem só até o '}'.
  * Um nome declarado aqui pode "esconder" outro de fora sem ser redeclaração
  * (tabela_inserir só compara com o mesmo escopo), e tabela_buscar procura
@@ -195,6 +305,14 @@ static void analisar_instrucao(NoAST *no)
         analisar_expressao(no->esq);
         analisar_instrucao(no->dir);
         analisar_instrucao(no->terceiro);
+        break;
+
+    case AST_PRINTF:
+        /* Cada argumento é uma expressão comum (variável não declarada
+         * etc. são reportadas como sempre); depois, o formato. */
+        for (NoAST *arg = no->esq; arg != NULL; arg = arg->proximo)
+            analisar_expressao(arg);
+        verificar_printf(no);
         break;
 
     case AST_WHILE:

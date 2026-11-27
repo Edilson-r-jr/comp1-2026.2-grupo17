@@ -1,0 +1,8 @@
+char: A
+codigo: 65
+proximo: C (67)
+soma de chars: 130
+aspas "duplas", barra \ e tab:	[fim]
+cem por cento: 100%
+linha
+nova

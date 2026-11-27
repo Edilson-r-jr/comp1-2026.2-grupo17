@@ -1,0 +1,13 @@
+#include <stdio.h>
+int a = 3;
+int b = 7;
+printf("a == b: %d\n", a == b);
+printf("a != b: %d\n", a != b);
+printf("a < b: %d\n", a < b);
+printf("a <= 3: %d\n", a <= 3);
+printf("a > b: %d\n", a > b);
+printf("b >= 7: %d\n", b >= 7);
+double x = 0.5;
+printf("x < 1: %d\n", x < 1);
+int r = (a + 1 > b) + (a * 3 > b);
+printf("soma de comparacoes: %d\n", r);

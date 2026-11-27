@@ -1,0 +1,1 @@
+Erro Léxico [Linha 1, Col 8]: Sequência de escape inválida na string "caminho C:\pasta\n"

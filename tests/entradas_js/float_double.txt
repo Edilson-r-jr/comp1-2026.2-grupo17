@@ -1,0 +1,21 @@
+#include <stdio.h>
+double d = 1.0 / 3.0;
+float f = 1.0 / 3.0;
+printf("double: %f\n", d);
+printf("float: %f\n", f);
+printf("lf: %lf\n", d * 3.0);
+double grande = 123456.789;
+printf("grande: %f\n", grande);
+printf("negativo: %f\n", -2.5 * 4);
+printf("divisao mista: %f\n", 10 / 4.0);
+printf("int promovido: %f\n", 10 / 4 + 0.5);
+float soma = 0.1;
+soma = soma + 0.2;
+printf("float 0.1 + 0.2: %f\n", soma);
+double soma_d = 0.1 + 0.2;
+printf("double 0.1 + 0.2: %f\n", soma_d);
+float f_grande = 16777217.0;
+double d_grande = 16777217.0;
+printf("precisao float: %f, double: %f\n", f_grande, d_grande);
+float terco = 1.0 / 3.0;
+printf("terco * 3000000: %f\n", terco * 3000000.0);

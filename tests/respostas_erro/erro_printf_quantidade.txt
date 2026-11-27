@@ -1,0 +1,4 @@
+Erro Semântico [Linha 3, Col 1]: o formato do printf pede 2 argumento(s), mas foram passados 1
+Erro Semântico [Linha 4, Col 1]: o formato do printf pede 1 argumento(s), mas foram passados 2
+Erro Semântico [Linha 5, Col 1]: o formato do printf pede 0 argumento(s), mas foram passados 1
+3 erro(s) semântico(s) encontrado(s).

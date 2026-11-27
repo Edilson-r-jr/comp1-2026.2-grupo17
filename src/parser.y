@@ -59,9 +59,10 @@ struct NoAST *ast_raiz_programa = NULL;
 %token <intValue>  NUM NUM_LONG CARACTERE
 %token <realValue> NUM_REAL
 %token <strValue>  ID
+%token <strValue>  STRING   /* literal "..." (texto já decodificado) */
 
 /* Palavras-reservadas */
-%token IF ELSE WHILE RETURN VOID
+%token IF ELSE WHILE RETURN VOID PRINTF
 %token CHAR INT LONG FLOAT DOUBLE
 
 /* Operadores e pontuação */
@@ -72,6 +73,7 @@ struct NoAST *ast_raiz_programa = NULL;
 
 /* Declara os tipos não-terminais que agora retornam nós da AST */
 %type <no>       exp instrucao declaracao programa lista_instrucoes bloco
+%type <no>       lista_argumentos
 %type <intValue> tipo
 
 /* Libera o nome do ID se ele for descartado durante a recuperação de erro */
@@ -143,11 +145,32 @@ instrucao:
     | WHILE LPAREN exp RPAREN bloco {
         $$ = ast_criar_while($3, $5, @1.first_line, @1.first_column);
     }
+    /* printf: o formato é sempre um literal de string; os argumentos
+     * são expressões comuns. A string não é uma 'exp', então "x = "oi";"
+     * continua sendo erro de sintaxe (a linguagem não tem tipo string). */
+    | PRINTF LPAREN STRING RPAREN SEMICOLON {
+        $$ = ast_criar_printf($3, NULL, @1.first_line, @1.first_column);
+        free($3);
+    }
+    | PRINTF LPAREN STRING COMMA lista_argumentos RPAREN SEMICOLON {
+        $$ = ast_criar_printf($3, $5, @1.first_line, @1.first_column);
+        free($3);
+    }
     | error SEMICOLON {
         /* Recuperação de erro sintático: descarta até o próximo ';' e
          * retorna NULL para a AST ignorar a instrução */
         $$ = NULL;
         yyerrok;
+    }
+    ;
+
+/* Argumentos do printf, encadeados por 'proximo' como as instruções */
+lista_argumentos:
+    exp {
+        $$ = $1;
+    }
+    | lista_argumentos COMMA exp {
+        $$ = ast_anexar($1, $3);
     }
     ;
 
@@ -272,6 +295,8 @@ static const char *nome_simbolo(yysymbol_kind_t s) {
         case YYSYMBOL_DOUBLE:    return "palavra reservada 'double'";
         case YYSYMBOL_CHAR:      return "palavra reservada 'char'";
         case YYSYMBOL_VOID:      return "palavra reservada 'void'";
+        case YYSYMBOL_PRINTF:    return "palavra reservada 'printf'";
+        case YYSYMBOL_STRING:    return "string";
         default:                 return yysymbol_name(s);
     }
 }

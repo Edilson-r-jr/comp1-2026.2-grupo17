@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <stdbool.h>
+/* Tabela de conversão Celsius -> Fahrenheit e média de notas */
+int c = 0;
+printf("C\tF\n");
+while (c <= 40) {
+    double f = c * 9.0 / 5.0 + 32;
+    printf("%d\t%f\n", c, f);
+    c = c + 10;
+}
+int nota1 = 7;
+int nota2 = 8;
+int nota3 = 6;
+double media = (nota1 + nota2 + nota3) / 3.0;
+printf("media: %f\n", media);
+if (media >= 7.0) {
+    printf("situacao: %c (aprovado)\n", 'A');
+} else {
+    printf("situacao: %c (reprovado)\n", 'R');
+}
+int contador = 0;
+int n = 27;
+while (n != 1) {
+    if (n / 2 * 2 == n) {
+        n = n / 2;
+    } else {
+        n = 3 * n + 1;
+    }
+    contador = contador + 1;
+}
+printf("collatz(27) = %d passos, 100%% concluido\n", contador);
