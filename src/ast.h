@@ -27,6 +27,8 @@ typedef enum
     AST_IF,            /* esq = condição, dir = bloco do if,
                           terceiro = bloco do else (ou NULL) */
     AST_WHILE,         /* esq = condição, dir = bloco do laço */
+    AST_PRINTF,        /* texto = formato (já sem escapes: "\n" é um caractere),
+                          esq = 1º argumento (lista via 'proximo') ou NULL */
 
     /* Folhas */
     AST_NUMERO,        /* literal; tipo_c diz se o valor está em .i ou .r */
@@ -96,6 +98,7 @@ NoAST *ast_criar_bloco(NoAST *instrucoes, int linha, int coluna);
 NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao,
                     int linha, int coluna);
 NoAST *ast_criar_while(NoAST *condicao, NoAST *bloco, int linha, int coluna);
+NoAST *ast_criar_printf(const char *formato, NoAST *argumentos, int linha, int coluna);
 NoAST *ast_criar_programa(NoAST *instrucoes);
 
 /* Coloca 'no' no fim da lista iniciada em 'lista' e devolve o início.
@@ -108,6 +111,12 @@ NoAST *ast_anexar(NoAST *lista, NoAST *no);
  * nome nunca colide com uma variável do usuário (ex.: "x_1"), e é válido
  * em JavaScript. Devolve uma string alocada; quem chama libera. */
 char *ast_nome_variavel(const NoAST *no);
+
+/* Volta a escrever um texto como literal de string, entre aspas e com os
+ * escapes \n, \t, \\ e \" (iguais em C e em JavaScript). Outros caracteres
+ * de controle saem como \xHH. Usado pelo --ast, pelo TAC e pelo gerador JS.
+ * Devolve uma string alocada; quem chama libera. */
+char *ast_texto_escapado(const char *texto);
 
 void ast_imprimir(const NoAST *raiz, int nivel);
 void ast_liberar(NoAST *raiz);

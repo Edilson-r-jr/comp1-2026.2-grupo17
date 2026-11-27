@@ -121,6 +121,15 @@ NoAST *ast_criar_if(NoAST *condicao, NoAST *bloco_entao, NoAST *bloco_senao,
     return no;
 }
 
+/* printf(formato, argumentos...); argumentos pode ser NULL */
+NoAST *ast_criar_printf(const char *formato, NoAST *argumentos, int linha, int coluna)
+{
+    NoAST *no = criar_no_base(AST_PRINTF, linha, coluna);
+    no->texto = strdup(formato);
+    no->esq = argumentos;
+    return no;
+}
+
 /* while (condicao) bloco */
 NoAST *ast_criar_while(NoAST *condicao, NoAST *bloco, int linha, int coluna)
 {
@@ -161,6 +170,7 @@ static const char *nome_no(TipoNoAST tipo)
     case AST_BLOCO:         return "AST_BLOCO";
     case AST_IF:            return "AST_IF";
     case AST_WHILE:         return "AST_WHILE";
+    case AST_PRINTF:        return "AST_PRINTF";
     case AST_NUMERO:        return "AST_NUMERO";
     case AST_IDENTIFICADOR: return "AST_IDENTIFICADOR";
     case AST_SOMA:          return "AST_SOMA";
@@ -235,6 +245,13 @@ void ast_imprimir(const NoAST *raiz, int nivel)
             imprimir_numero(no);
             printf(")");
             break;
+        case AST_PRINTF:
+        {
+            char *formato = ast_texto_escapado(no->texto);
+            printf(" (%s)", formato);
+            free(formato);
+            break;
+        }
         default:
             break;
         }
@@ -284,4 +301,32 @@ char *ast_nome_variavel(const NoAST *no)
     char buf[128];
     snprintf(buf, sizeof buf, "%s$%d", no->simbolo->nome, no->simbolo->escopo);
     return strdup(buf);
+}
+
+char *ast_texto_escapado(const char *texto)
+{
+    /* Pior caso: cada caractere vira \xHH (4), mais as aspas e o '\0' */
+    char *resultado = malloc(strlen(texto) * 4 + 3);
+    char *p = resultado;
+
+    *p++ = '"';
+    for (const unsigned char *c = (const unsigned char *)texto; *c; c++)
+    {
+        switch (*c)
+        {
+        case '\n': *p++ = '\\'; *p++ = 'n';  break;
+        case '\t': *p++ = '\\'; *p++ = 't';  break;
+        case '\\': *p++ = '\\'; *p++ = '\\'; break;
+        case '"':  *p++ = '\\'; *p++ = '"';  break;
+        default:
+            if (*c < 0x20 || *c == 0x7f)
+                p += sprintf(p, "\\x%02x", *c);
+            else
+                *p++ = (char)*c; /* inclui bytes UTF-8 (acentos) sem mudança */
+            break;
+        }
+    }
+    *p++ = '"';
+    *p = '\0';
+    return resultado;
 }
