@@ -121,14 +121,19 @@ static char *novo_rotulo(void)
 }
 
 /* Texto de um literal. Inteiros (char/int/long) saem como número;
- * reais sempre com ponto, para 5.0 não virar o inteiro 5. */
+ * reais sempre com ponto, para 5.0 não virar o inteiro 5.
+ * Reais usam a menor representação que volta ao mesmo double, como no
+ * gerador de JavaScript: 0.1 continua 0.1, e 1.0 / 3 dobrado pela
+ * otimização sai 0.33333333333333331 em vez de 0.333333 (com %g). */
 static char *texto_numero(const NoAST *no)
 {
     char buf[64];
 
     if (tipo_eh_real(no->tipo_c))
     {
-        snprintf(buf, sizeof buf, "%g", no->valor.r);
+        snprintf(buf, sizeof buf, "%.15g", no->valor.r);
+        if (strtod(buf, NULL) != no->valor.r)
+            snprintf(buf, sizeof buf, "%.17g", no->valor.r);
         if (!strpbrk(buf, ".eEnN"))
             strcat(buf, ".0");
     }

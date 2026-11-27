@@ -5,9 +5,6 @@ cd "$(dirname "$0")" || exit 1
 EXECUTAVEL="../src/parser"
 [ -f "$EXECUTAVEL" ] || EXECUTAVEL="../src/parser.exe"
 
-DIR_ENTRADAS="entradas_tac"
-DIR_RESPOSTAS="respostas_tac"
-
 RESULTADO=".tmp_resultado_$$.txt"
 ERROS=".tmp_erros_$$.txt"
 trap 'rm -f "$RESULTADO" "$ERROS"' EXIT
@@ -28,6 +25,10 @@ if [ ! -f "$EXECUTAVEL" ]; then
     exit 1
 fi
 
+# Roda os testes de uma pasta: rodar_testes <entradas> <respostas> <opções>
+rodar_testes() {
+local DIR_ENTRADAS="$1" DIR_RESPOSTAS="$2" OPCOES="$3"
+
 for ENTRADA in "$DIR_ENTRADAS"/*.txt; do
     [ -e "$ENTRADA" ] || continue
 
@@ -43,7 +44,7 @@ for ENTRADA in "$DIR_ENTRADAS"/*.txt; do
 
     echo -e "${AMARELO}Testando: $NOME${RESET}"
 
-    "$EXECUTAVEL" --tac < "$ENTRADA" > "$RESULTADO" 2> "$ERROS"
+    "$EXECUTAVEL" $OPCOES < "$ENTRADA" > "$RESULTADO" 2> "$ERROS"
 
     if diff -u "$RESPOSTA" "$RESULTADO" > /dev/null; then
         echo -e "${VERDE}[OK] $NOME passou.${RESET}\n"
@@ -62,6 +63,13 @@ for ENTRADA in "$DIR_ENTRADAS"/*.txt; do
 
     ((TOTAL++))
 done
+}
+
+rodar_testes entradas_tac respostas_tac "--tac"
+
+# Otimização (Issue #50): constant folding antes do TAC
+echo -e "${AMARELO}==> Testes de otimização (--otimizar --tac)${RESET}\n"
+rodar_testes entradas_otimizacao respostas_otimizacao "--otimizar --tac"
 
 echo -e "${AMARELO}---------------------------------------${RESET}"
 echo -e "Resultado: $TOTAL testes | ${VERDE}$PASSOU passaram${RESET} | ${VERMELHO}$FALHOU falharam${RESET}"
