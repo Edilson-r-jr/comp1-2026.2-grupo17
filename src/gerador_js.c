@@ -30,6 +30,52 @@ static int nivel_indentacao; /* níveis de 4 espaços (usado pelos blocos) */
 static char *gerar_expressao(const NoAST *no);
 static void gerar_instrucao(const NoAST *no);
 
+/* Runtime JS: implementação do printf do C, emitida no início do arquivo
+ * só quando o programa usa printf.
+ *   %d %i %ld  inteiro: o gerador já trunca as contas, então String(v)
+ *   %c         caractere com aquele código
+ *   %f %lf     6 casas, como no C (toFixed); -0 e infinito como no C
+ *   %%         o próprio '%'
+ * A semântica já garantiu que o formato só tem esses especificadores e
+ * que cada argumento tem o tipo certo. A saída usa process.stdout.write
+ * porque console.log acrescentaria uma quebra de linha que o C não dá. */
+static const char *const RUNTIME_PRINTF[] = {
+    "function printf(formato, ...args) {",
+    "    let i = 0;",
+    "    const texto = formato.replace(/%(l?[dif]|c|%)/g, (_, esp) => {",
+    "        if (esp === \"%\") return \"%\";",
+    "        const v = args[i++];",
+    "        if (esp === \"c\") return String.fromCharCode(v);",
+    "        if (esp.endsWith(\"f\")) {",
+    "            if (v === Infinity) return \"inf\";",
+    "            if (v === -Infinity) return \"-inf\";",
+    "            if (Object.is(v, -0)) return \"-0.000000\";",
+    "            return v.toFixed(6);",
+    "        }",
+    "        return String(v);",
+    "    });",
+    "    process.stdout.write(texto);",
+    "}",
+    NULL,
+};
+
+/* O programa tem algum printf? (procura dentro de blocos, if e while) */
+static int usa_printf(const NoAST *no)
+{
+    for (; no != NULL; no = no->proximo)
+    {
+        if (no->tipo == AST_PRINTF)
+            return 1;
+        if (no->tipo == AST_BLOCO || no->tipo == AST_IF || no->tipo == AST_WHILE)
+        {
+            if (usa_printf(no->esq) || usa_printf(no->dir) ||
+                usa_printf(no->terceiro))
+                return 1;
+        }
+    }
+    return 0;
+}
+
 /* sprintf que aloca o tamanho certo (asprintf não existe no MinGW) */
 static char *formatar(const char *fmt, ...)
 {
@@ -282,6 +328,24 @@ static void gerar_instrucao(const NoAST *no)
         break;
     }
 
+    case AST_PRINTF:
+    {
+        /* printf("formato", a, b);  com cada argumento traduzido como
+         * qualquer expressão (já com a aritmética do tipo certo) */
+        char *chamada = ast_texto_escapado(no->texto);
+        for (const NoAST *arg = no->esq; arg != NULL; arg = arg->proximo)
+        {
+            char *valor = gerar_expressao(arg);
+            char *maior = formatar("%s, %s", chamada, valor);
+            free(chamada);
+            free(valor);
+            chamada = maior;
+        }
+        emitir_linha("printf(%s);", chamada);
+        free(chamada);
+        break;
+    }
+
     case AST_WHILE:
     {
         char *cond = gerar_condicao(no->esq);
@@ -309,6 +373,12 @@ void gerador_js_gerar(const NoAST *raiz, FILE *saida)
 
     /* Modo estrito: uso de variável não declarada vira erro no JS */
     emitir_linha("\"use strict\";");
+
+    if (usa_printf(raiz->esq))
+    {
+        for (int i = 0; RUNTIME_PRINTF[i] != NULL; i++)
+            emitir_linha("%s", RUNTIME_PRINTF[i]);
+    }
 
     for (const NoAST *no = raiz->esq; no != NULL; no = no->proximo)
         gerar_instrucao(no);
