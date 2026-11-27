@@ -62,8 +62,13 @@ for NOME in "${NOMES[@]}"; do
         continue
     fi
 
-    "$TMP/programa" > "$DIR_RESPOSTAS/$NOME.txt"
-    echo "[OK] $DIR_RESPOSTAS/$NOME.txt"
+    if "$TMP/programa" > "$DIR_RESPOSTAS/$NOME.txt"; then
+        echo "[OK] $DIR_RESPOSTAS/$NOME.txt"
+    else
+        echo "[ERRO] O programa C falhou ao executar: $NOME" >&2
+        rm -f "$DIR_RESPOSTAS/$NOME.txt"
+        STATUS=1
+    fi
 done
 
 exit $STATUS
