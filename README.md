@@ -69,7 +69,7 @@ Com base nessa análise, o grupo chegou à tabela abaixo, com os requisitos que 
 | Tipos `char`, `int`, `long`, `float`, `double`                        |   ✅   |
 | Tipo `bool` com `true`/`false`                                        |   ⬜   |
 | Literais inteiro, `long`, real e caractere                            |   ✅   |
-| Literais de string                                                    |   ⬜   |
+| Literais de string (só como formato do `printf`)                      |   ✅   |
 | Comentários de linha e de bloco                                       |   ✅   |
 | `;` como fim de instrução                                             |   ✅   |
 | Declaração com e sem inicialização (`tipo x;`, `tipo x = e;`)         |   ✅   |
@@ -81,8 +81,8 @@ Com base nessa análise, o grupo chegou à tabela abaixo, com os requisitos que 
 | `do-while`, `for`, `break`, `continue`                                |   ⬜   |
 | Blocos e pilha de escopos                                             |   ✅   |
 | Funções, `return`, recursão, `main`                                   |   ⬜   |
-| `printf` e _runtime_ JS                                               |   ⬜   |
-| Ignorar `#include <stdio.h>` e `#include <stdbool.h>`                 |   ⬜   |
+| `printf` e _runtime_ JS                                               |   ✅   |
+| Ignorar `#include <stdio.h>` e `#include <stdbool.h>`                 |   ✅   |
 | **Geração de código JavaScript**                                      |   ⬜   |
 | Erro explícito de "recurso fora do escopo"                            |   ⬜   |
 
@@ -182,6 +182,16 @@ L1:
 ```
 
 A condição fica logo depois do rótulo de início, para ser reavaliada a cada volta do laço.
+
+O `printf` usa a forma padrão de chamada do TAC: cada parâmetro com `param` e a chamada com `call printf, N`, em que `N` conta também o formato. Os argumentos são todos calculados antes do primeiro `param`:
+
+```text
+t0 = a * 2              // printf("a = %d, dobro = %d\n", a, a * 2);
+param "a = %d, dobro = %d\n"
+param a
+param t0
+call printf, 3
+```
 
 ### Testes de geração de TAC
 
@@ -286,6 +296,72 @@ while (i < 5) {
 Nas condições de `if` e `while`, comparações saem diretamente (`i < 5`, `i === 2`), sem a conversão `? 1 : 0` usada em expressões atribuídas a variáveis.
 
 A tradução foi verificada comparando, em cerca de 2.000 programas gerados aleatoriamente (com todos os tipos, operadores e conversões), o resultado do JavaScript no Node.js com o do mesmo programa compilado pelo `gcc`.
+
+### `printf` e _runtime_ JS
+
+O `printf` é traduzido para uma chamada a uma função `printf` de um pequeno _runtime_ em JavaScript. O _runtime_ é emitido no início do arquivo gerado só quando o programa usa `printf`. As linhas `#include <stdio.h>` e `#include <stdbool.h>` são ignoradas, então programas C comuns são aceitos. Qualquer outra diretiva (`#include <math.h>`, `#define`, ...) é erro léxico.
+
+Entrada:
+
+```c
+#include <stdio.h>
+int n = 5;
+int fat = 1;
+while (n > 1) {
+    fat = fat * n;
+    n = n - 1;
+}
+printf("fatorial = %d\n", fat);
+printf("media = %f\n", 7 / 2.0);
+```
+
+Execução:
+
+```bash
+./parser --js programa.c > programa.js
+node programa.js
+```
+
+Saída (idêntica à do mesmo programa compilado com `gcc`):
+
+```text
+fatorial = 120
+media = 3.500000
+```
+
+| Especificador  | Tipo do argumento  | Saída                                      |
+| -------------- | ------------------ | ------------------------------------------ |
+| `%d`, `%i`     | `char`, `int`      | inteiro                                    |
+| `%ld`, `%li`   | `long`             | inteiro                                    |
+| `%c`           | `char`, `int`      | o caractere com aquele código              |
+| `%f`, `%lf`    | `float`, `double`  | 6 casas decimais, como no C (`3.500000`)   |
+| `%%`           | nenhum             | o próprio `%`                              |
+
+- O formato é sempre um literal de string, com os escapes `\n`, `\t`, `\\` e `\"`. A linguagem não tem tipo string: `x = "oi";` é erro de sintaxe.
+- A saída usa `process.stdout.write`, que não acrescenta quebra de linha (o `console.log` acrescentaria).
+- A análise semântica confere o formato: especificador não suportado (`%5d`, `%.2f`, `%s`), número errado de argumentos e tipo incompatível (`%d` com `double`) são erros. Em C essas combinações são comportamento indefinido e imprimiriam lixo, o que impediria o JavaScript de imprimir o mesmo que o C.
+- Limitações: em um empate exato no arredondamento do `%f` (ex.: `0.0078125`), o C arredonda para o par e o JavaScript para cima; valores com `%f` acima de 10^21 saem em notação científica no JavaScript.
+
+### Testes de JavaScript (Node.js)
+
+Os testes de ponta a ponta compilam cada programa de `tests/entradas_js/` com `--js`, executam o resultado no Node.js e comparam a saída com `tests/respostas_js/`. Cada programa roda duas vezes, sem e com `--otimizar`, para garantir que a otimização não muda o resultado.
+
+**Requisito:** [Node.js](https://nodejs.org) instalado (comando `node` no `PATH`). Sem ele, a bateria avisa e é pulada, sem falhar o `make test`.
+
+```bash
+cd src
+make test                    # todas as baterias, incluindo a de JavaScript
+../tests/run_js_tests.sh     # só a bateria de JavaScript
+```
+
+As respostas esperadas são a saída do mesmo programa compilado com `gcc`, e não o que achamos que o C imprimiria. Ao criar ou alterar um teste, gere a resposta com o script abaixo e confira antes de commitar (requer `gcc`):
+
+```bash
+./tests/gerar_respostas_js.sh              # todos os testes
+./tests/gerar_respostas_js.sh while_soma   # só um teste
+```
+
+Como as instruções da linguagem ficam fora de funções, o script coloca as linhas `#include` no topo e o resto do programa dentro de um `int main(void) { ... return 0; }` antes de compilar.
 
 ## Integrantes
  
