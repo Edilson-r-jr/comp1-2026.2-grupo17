@@ -1,0 +1,11 @@
+double: 0.333333
+float: 0.333333
+lf: 1.000000
+grande: 123456.789000
+negativo: -10.000000
+divisao mista: 2.500000
+int promovido: 2.500000
+float 0.1 + 0.2: 0.300000
+double 0.1 + 0.2: 0.300000
+precisao float: 16777216.000000, double: 16777217.000000
+terco * 3000000: 1000000.029802

@@ -1,0 +1,15 @@
+#include <stdio.h>
+int a = 17;
+int b = 5;
+printf("%d + %d = %d\n", a, b, a + b);
+printf("%d - %d = %d\n", a, b, a - b);
+printf("%d * %d = %d\n", a, b, a * b);
+printf("%d / %d = %d\n", a, b, a / b);
+printf("-7 / 2 = %d\n", -7 / 2);
+printf("7 / -2 = %d\n", 7 / -2);
+printf("precedencia: %d\n", 2 + 3 * 4 - (10 - 4) / 3);
+printf("menos unario: %i\n", -(a - b));
+long grande = 3000000000L;
+long produto = grande * 3L;
+printf("long: %ld %ld\n", grande, produto);
+printf("long / int: %ld\n", grande / 7);

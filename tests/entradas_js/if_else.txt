@@ -1,0 +1,17 @@
+#include <stdio.h>
+int x = 10;
+if (x > 5) {
+    printf("maior que 5\n");
+} else {
+    printf("menor ou igual a 5\n");
+}
+if (x == 3) {
+    printf("igual a 3\n");
+} else {
+    printf("diferente de 3\n");
+}
+if (x - 10) {
+    printf("nao zero\n");
+} else {
+    printf("zero e falso\n");
+}

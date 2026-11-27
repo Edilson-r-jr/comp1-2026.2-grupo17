@@ -1,0 +1,8 @@
+#include <stdio.h>
+int n = 1;
+long fat = 1L;
+while (n <= 15) {
+    fat = fat * n;
+    printf("%d! = %ld\n", n, fat);
+    n = n + 1;
+}

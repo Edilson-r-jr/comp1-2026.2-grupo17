@@ -1,0 +1,3 @@
+maior que 5
+diferente de 3
+zero e falso

@@ -1,0 +1,9 @@
+#include <stdio.h>
+int n = 5;
+int fat = 1;
+while (n > 1) {
+    fat = fat * n;
+    n = n - 1;
+}
+printf("fatorial = %d\n", fat);
+printf("media = %f\n", 7 / 2.0);

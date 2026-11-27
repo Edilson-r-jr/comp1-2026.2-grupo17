@@ -1,0 +1,12 @@
+#include <stdio.h>
+char c = 'A';
+printf("char: %c\n", c);
+printf("codigo: %d\n", c);
+char proximo = c + 2;
+printf("proximo: %c (%d)\n", proximo, proximo);
+printf("soma de chars: %d\n", c + c);
+printf("aspas \"duplas\", barra \\ e tab:\t[fim]\n");
+printf("cem por cento: 100%%\n");
+char quebra = '\n';
+printf("linha%cnova", quebra);
+printf("\n");

@@ -1,0 +1,2 @@
+fatorial = 120
+media = 3.500000

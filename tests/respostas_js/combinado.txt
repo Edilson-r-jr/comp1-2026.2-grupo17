@@ -1,0 +1,9 @@
+C	F
+0	32.000000
+10	50.000000
+20	68.000000
+30	86.000000
+40	104.000000
+media: 7.000000
+situacao: A (aprovado)
+collatz(27) = 111 passos, 100% concluido

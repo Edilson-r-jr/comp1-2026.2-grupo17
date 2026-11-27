@@ -1,0 +1,23 @@
+#include <stdio.h>
+int i = 1;
+while (i <= 4) {
+    int j = 1;
+    while (j <= i) {
+        if (j == i) {
+            printf("%d\n", i * j);
+        } else {
+            printf("%d\t", i * j);
+        }
+        j = j + 1;
+    }
+    i = i + 1;
+}
+int pares = 0;
+int k = 0;
+while (k < 10) {
+    if (k / 2 * 2 == k) {
+        pares = pares + 1;
+    }
+    k = k + 1;
+}
+printf("pares entre 0 e 9: %d\n", pares);
