@@ -76,17 +76,124 @@ Com base nessa análise, o grupo chegou à tabela abaixo, com os requisitos que 
 | Várias variáveis por declaração (`int a, b;`)                         |   ⬜   |
 | Tabela de símbolos: erros de redeclaração e de variável não declarada |   ✅   |
 | Operadores `+ - * /` e `-` unário, com promoção de tipos              |   ✅   |
-| `%`, operadores relacionais e lógicos, `!`                            |   ⬜   |
+| Operadores relacionais `==`, `!=`, `<`, `<=`, `>`, `>=`               |   ✅   |
+| `%`, operadores lógicos `&&`, `||` e `!`                              |   ⬜   |
 | `if`/`else` e `while` (corpo sempre entre chaves)                     |   ✅   |
 | `do-while`, `for`, `break`, `continue`                                |   ⬜   |
 | Blocos e pilha de escopos                                             |   ✅   |
 | Funções, `return`, recursão, `main`                                   |   ⬜   |
 | `printf` e _runtime_ JS                                               |   ✅   |
 | Ignorar `#include <stdio.h>` e `#include <stdbool.h>`                 |   ✅   |
-| **Geração de código JavaScript**                                      |   ⬜   |
+| **Geração de código JavaScript**                                      |   ✅   |
 | Erro explícito de "recurso fora do escopo"                            |   ⬜   |
 
 ✅ implementado · ⬜ pendente
+
+
+### Arquitetura
+
+```text
+Código C
+   |
+scanner.l       Análise léxica
+   |
+parser.y        Análise sintática e construção da AST
+   |
+ast.c           Estrutura e impressão da AST
+   |
+semantica.c + tabela.c   Tipos, símbolos e escopos
+   |
+otimizacao.c    Constant folding opcional (--otimizar)
+   |
+   +----------------------+
+   |                      |
+tac.c                  gerador_js.c
+TAC (--tac)            JavaScript (--js)
+```
+
+A análise semântica só ocorre após parsing sem erros. TAC e JavaScript só são emitidos quando não há erros léxicos, sintáticos ou semânticos. A otimização, quando solicitada, ocorre depois da semântica e antes das saídas.
+
+### Como usar
+
+Compile no Linux/WSL, a partir da raiz:
+
+```bash
+make -C src
+```
+
+O executável será `src/parser`. Opções disponíveis:
+
+| Opção | Função |
+| --- | --- |
+| `--ast` | Imprime a AST anotada com tipos e símbolos. |
+| `--tabela` ou `-t` | Imprime a tabela de símbolos. |
+| `--tac` | Gera código intermediário de três endereços. |
+| `--otimizar` | Aplica constant folding e simplificações algébricas. |
+| `--js` | Gera JavaScript a partir da AST. |
+
+Exemplos:
+
+```bash
+./src/parser --ast programa.c
+./src/parser --tabela programa.c
+./src/parser --otimizar --tac programa.c
+./src/parser --otimizar --js programa.c
+```
+
+Exemplo completo:
+
+```c
+#include <stdio.h>
+int n = 5;
+int fatorial = 1;
+while (n > 1) {
+    fatorial = fatorial * n;
+    n = n - 1;
+}
+printf("fatorial = %d\n", fatorial);
+```
+
+```bash
+./src/parser --js fatorial.c > fatorial.js
+node fatorial.js
+```
+
+Saída: `fatorial = 120`.
+
+### Decisões técnicas
+
+- **C → JavaScript:** o destino permite executar o resultado com Node.js, mantendo o escopo da disciplina.
+- **JS diretamente da AST:** o TAC usa rótulos e `goto`, que não existem em JavaScript. A AST permite emitir diretamente `if`, `else` e `while`.
+- **Conversões numéricas:** `tipo_c` orienta o uso de `| 0`, `Math.imul`, `Math.fround` e `Math.trunc`. `long` tem precisão exata limitada a `2^53` no tipo `Number` do JavaScript.
+- **Escopos:** nomes internos como `x$1` preservam o sombreamento sem colidir com identificadores C.
+- **Otimização opcional:** `--otimizar` permite comparar a AST e as saídas com e sem constant folding.
+- **printf:** o runtime é incluído somente quando o programa contém `printf`.
+
+### Testes
+
+Execute todas as baterias com:
+
+```bash
+make -C src test
+```
+
+O script `tests/run_all_tests.sh` reúne os testes do compilador/AST, AST isolada, scanner, TAC/otimização e JavaScript no Node.js. A bateria JS requer Node.js e compara a execução gerada com as respostas de referência em C. Para executar somente essa bateria:
+
+```bash
+tests/run_js_tests.sh
+```
+
+As respostas de referência podem ser regeneradas com `tests/gerar_respostas_js.sh` (requer GCC).
+
+### Trabalhos futuros
+
+- **Controle de fluxo:** `for`, `do-while`, `break` e `continue`.
+- **Funções:** declaração/definição de funções, parâmetros, retorno, recursão e `main`; o subconjunto atual aceita instruções no nível superior.
+- **Operadores e tipos:** `%`, `&&`, `||`, `!`, `bool`, `true` e `false`.
+- **Strings como dados:** variáveis string, arrays de caracteres e manipulação de texto; strings são aceitas apenas como formato de `printf`.
+- **Recursos de C:** ponteiros, alocação dinâmica, estruturas, pré-processador completo e demais funções da biblioteca padrão.
+
+Esses recursos ampliariam a gramática, a semântica, a representação de dados ou o runtime além do prazo da disciplina. As simplificações `x + 0`, `x - 0`, `x * 1` e `x / 1` já estão implementadas em `--otimizar`.
 
 ### Recursos fora do escopo
 
